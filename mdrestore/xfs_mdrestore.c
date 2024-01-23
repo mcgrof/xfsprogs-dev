@@ -7,6 +7,7 @@
 #include "libxfs.h"
 #include "xfs_metadump.h"
 #include <libfrog/platform.h>
+#include "libfrog/div64.h"
 
 union mdrestore_headers {
 	__be32				magic;
@@ -55,6 +56,58 @@ print_progress(const char *fmt, ...)
 	printf("\r%-59s", buf);
 	fflush(stdout);
 	mdrestore.progress_since_warning = true;
+}
+
+static inline void
+maybe_print_progress(
+	int64_t		*cursor,
+	int64_t		bytes_read)
+{
+	int64_t		mb_now = bytes_read >> 20;
+
+	if (!mdrestore.show_progress)
+		return;
+
+	if (mb_now != *cursor) {
+		print_progress("%lld MB read", mb_now);
+		*cursor = mb_now;
+	}
+}
+
+static inline void
+final_print_progress(
+	int64_t		*cursor,
+	int64_t		bytes_read)
+{
+	if (!mdrestore.show_progress)
+		goto done;
+
+	if (bytes_read <= (*cursor << 20))
+		goto done;
+
+	print_progress("%lld MB read", howmany_64(bytes_read, 1U << 20));
+
+done:
+	if (mdrestore.progress_since_warning)
+		putchar('\n');
+}
+
+static void
+fixup_superblock(
+	int		ddev_fd,
+	char		*block_buffer,
+	struct xfs_sb	*sb)
+{
+	memset(block_buffer, 0, sb->sb_sectsize);
+	sb->sb_inprogress = 0;
+	libxfs_sb_to_disk((struct xfs_dsb *)block_buffer, sb);
+	if (xfs_sb_version_hascrc(sb)) {
+		xfs_update_cksum(block_buffer, sb->sb_sectsize,
+				 offsetof(struct xfs_sb, sb_crc));
+	}
+
+	if (pwrite(ddev_fd, block_buffer, sb->sb_sectsize, 0) < 0)
+		fatal("error writing primary superblock: %s\n", strerror(errno));
 }
 
 static int
@@ -160,6 +213,7 @@ restore_v1(
 	int			mb_count;
 	xfs_sb_t		sb;
 	int64_t			bytes_read;
+	int64_t			mb_read = 0;
 
 	block_size = 1 << h->v1.mb_blocklog;
 	max_indices = (block_size - sizeof(xfs_metablock_t)) / sizeof(__be64);
@@ -208,9 +262,7 @@ restore_v1(
 	bytes_read = 0;
 
 	for (;;) {
-		if (mdrestore.show_progress &&
-		    (bytes_read & ((1 << 20) - 1)) == 0)
-			print_progress("%lld MB read", bytes_read >> 20);
+		maybe_print_progress(&mb_read, bytes_read);
 
 		for (cur_index = 0; cur_index < mb_count; cur_index++) {
 			if (pwrite(ddev_fd, &block_buffer[cur_index <<
@@ -240,19 +292,9 @@ restore_v1(
 		bytes_read += block_size + (mb_count << h->v1.mb_blocklog);
 	}
 
-	if (mdrestore.progress_since_warning)
-		putchar('\n');
+	final_print_progress(&mb_read, bytes_read);
 
-	memset(block_buffer, 0, sb.sb_sectsize);
-	sb.sb_inprogress = 0;
-	libxfs_sb_to_disk((struct xfs_dsb *)block_buffer, &sb);
-	if (xfs_sb_version_hascrc(&sb)) {
-		xfs_update_cksum(block_buffer, sb.sb_sectsize,
-				 offsetof(struct xfs_sb, sb_crc));
-	}
-
-	if (pwrite(ddev_fd, block_buffer, sb.sb_sectsize, 0) < 0)
-		fatal("error writing primary superblock: %s\n", strerror(errno));
+	fixup_superblock(ddev_fd, block_buffer, &sb);
 
 	free(metablock);
 }
@@ -268,22 +310,21 @@ read_header_v2(
 	union mdrestore_headers		*h,
 	FILE				*md_fp)
 {
-	bool				want_external_log;
+	unsigned int			compat;
 
 	if (fread((uint8_t *)&(h->v2) + sizeof(h->v2.xmh_magic),
 			sizeof(h->v2) - sizeof(h->v2.xmh_magic), 1, md_fp) != 1)
 		fatal("error reading from metadump file\n");
 
 	if (h->v2.xmh_incompat_flags != 0)
-		fatal("Metadump header has unknown incompat flags set");
+		fatal("Metadump header has unknown incompat flags set\n");
 
 	if (h->v2.xmh_reserved != 0)
-		fatal("Metadump header's reserved field has a non-zero value");
+		fatal("Metadump header's reserved field has a non-zero value\n");
 
-	want_external_log = !!(be32_to_cpu(h->v2.xmh_incompat_flags) &
-			XFS_MD2_COMPAT_EXTERNALLOG);
+	compat = be32_to_cpu(h->v2.xmh_compat_flags);
 
-	if (want_external_log && !mdrestore.external_log)
+	if (!mdrestore.external_log && (compat & XFS_MD2_COMPAT_EXTERNALLOG))
 		fatal("External Log device is required\n");
 }
 
@@ -344,6 +385,7 @@ restore_v2(
 	struct xfs_sb		sb;
 	struct xfs_meta_extent	xme;
 	char			*block_buffer;
+	int64_t			mb_read = 0;
 	int64_t			bytes_read;
 	uint64_t		offset;
 	int			len;
@@ -391,6 +433,8 @@ restore_v2(
 		char *device;
 		int fd;
 
+		maybe_print_progress(&mb_read, bytes_read);
+
 		if (fread(&xme, sizeof(xme), 1, md_fp) != 1) {
 			if (feof(md_fp))
 				break;
@@ -418,36 +462,13 @@ restore_v2(
 				len);
 
 		bytes_read += len;
-
-		if (mdrestore.show_progress) {
-			static int64_t mb_read;
-			int64_t mb_now = bytes_read >> 20;
-
-			if (mb_now != mb_read) {
-				print_progress("%lld MB read", mb_now);
-				mb_read = mb_now;
-			}
-		}
 	} while (1);
 
-	if (mdrestore.progress_since_warning)
-		putchar('\n');
+	final_print_progress(&mb_read, bytes_read);
 
-	memset(block_buffer, 0, sb.sb_sectsize);
-	sb.sb_inprogress = 0;
-	libxfs_sb_to_disk((struct xfs_dsb *)block_buffer, &sb);
-	if (xfs_sb_version_hascrc(&sb)) {
-		xfs_update_cksum(block_buffer, sb.sb_sectsize,
-				offsetof(struct xfs_sb, sb_crc));
-	}
-
-	if (pwrite(ddev_fd, block_buffer, sb.sb_sectsize, 0) < 0)
-		fatal("error writing primary superblock: %s\n",
-			strerror(errno));
+	fixup_superblock(ddev_fd, block_buffer, &sb);
 
 	free(block_buffer);
-
-	return;
 }
 
 static struct mdrestore_ops mdrestore_ops_v2 = {
@@ -472,11 +493,11 @@ main(
 	union mdrestore_headers	headers;
 	FILE			*src_f;
 	char			*logdev = NULL;
-	int			data_dev_fd;
-	int			log_dev_fd;
+	int			data_dev_fd = -1;
+	int			log_dev_fd = -1;
 	int			c;
-	bool			is_data_dev_file;
-	bool			is_log_dev_file;
+	bool			is_data_dev_file = false;
+	bool			is_log_dev_file = false;
 
 	mdrestore.show_progress = false;
 	mdrestore.show_info = false;
@@ -561,7 +582,6 @@ main(
 	/* check and open data device */
 	data_dev_fd = open_device(argv[optind], &is_data_dev_file);
 
-	log_dev_fd = -1;
 	if (mdrestore.external_log)
 		/* check and open log device */
 		log_dev_fd = open_device(logdev, &is_log_dev_file);

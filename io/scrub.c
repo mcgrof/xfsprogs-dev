@@ -41,37 +41,173 @@ scrub_help(void)
 	printf("\n");
 }
 
-static void
-scrub_ioctl(
-	int				fd,
-	int				type,
-	uint64_t			control,
-	uint32_t			control2)
+static bool
+parse_inode(
+	int		argc,
+	char		**argv,
+	int		optind,
+	__u64		*ino,
+	__u32		*gen)
 {
-	struct xfs_scrub_metadata	meta;
-	const struct xfrog_scrub_descr	*sc;
-	int				error;
+	char		*p;
+	unsigned long long control;
+	unsigned long	control2;
 
-	sc = &xfrog_scrubbers[type];
-	memset(&meta, 0, sizeof(meta));
-	meta.sm_type = type;
-	switch (sc->type) {
+	if (optind == argc) {
+		*ino = 0;
+		*gen = 0;
+		return true;
+	}
+
+	if (optind != argc - 2) {
+		fprintf(stderr,
+ _("Must specify inode number and generation.\n"));
+		return false;
+	}
+
+	control = strtoull(argv[optind], &p, 0);
+	if (*p != '\0') {
+		fprintf(stderr, _("Bad inode number '%s'.\n"),
+				argv[optind]);
+		return false;
+	}
+	control2 = strtoul(argv[optind + 1], &p, 0);
+	if (*p != '\0') {
+		fprintf(stderr, _("Bad generation number '%s'.\n"),
+				argv[optind + 1]);
+		return false;
+	}
+
+	*ino = control;
+	*gen = control2;
+	return true;
+}
+
+static bool
+parse_agno(
+	int		argc,
+	char		**argv,
+	int		optind,
+	__u32		*agno)
+{
+	char		*p;
+	unsigned long	control;
+
+	if (optind != argc - 1) {
+		fprintf(stderr, _("Must specify one AG number.\n"));
+		return false;
+	}
+
+	control = strtoul(argv[optind], &p, 0);
+	if (*p != '\0') {
+		fprintf(stderr, _("Bad AG number '%s'.\n"), argv[optind]);
+		return false;
+	}
+
+	*agno = control;
+	return true;
+}
+
+static bool
+parse_none(
+	int		argc,
+	int		optind)
+{
+	if (optind != argc) {
+		fprintf(stderr, _("No parameters allowed.\n"));
+		return false;
+	}
+
+	/* no control parameters */
+	return true;
+}
+
+static int
+parse_args(
+	int				argc,
+	char				**argv,
+	const struct cmdinfo		*cmdinfo,
+	struct xfs_scrub_metadata	*meta)
+{
+	int				type = -1;
+	int				i, c;
+	uint32_t			flags = 0;
+	const struct xfrog_scrub_descr	*d = NULL;
+
+	memset(meta, 0, sizeof(struct xfs_scrub_metadata));
+	while ((c = getopt(argc, argv, "R")) != EOF) {
+		switch (c) {
+		case 'R':
+			flags |= XFS_SCRUB_IFLAG_FORCE_REBUILD;
+			break;
+		default:
+			exitcode = 1;
+			return command_usage(cmdinfo);
+		}
+	}
+	if (optind > argc - 1) {
+		exitcode = 1;
+		return command_usage(cmdinfo);
+	}
+
+	for (i = 0, d = xfrog_scrubbers; i < XFS_SCRUB_TYPE_NR; i++, d++) {
+		if (strcmp(d->name, argv[optind]) == 0) {
+			type = i;
+			break;
+		}
+	}
+	if (type < 0) {
+		printf(_("Unknown type '%s'.\n"), argv[optind]);
+		exitcode = 1;
+		return command_usage(cmdinfo);
+	}
+	optind++;
+
+	meta->sm_type = type;
+	meta->sm_flags = flags;
+
+	switch (d->type) {
+	case XFROG_SCRUB_TYPE_INODE:
+		if (!parse_inode(argc, argv, optind, &meta->sm_ino,
+						     &meta->sm_gen)) {
+			exitcode = 1;
+			return command_usage(cmdinfo);
+		}
+		break;
 	case XFROG_SCRUB_TYPE_AGHEADER:
 	case XFROG_SCRUB_TYPE_PERAG:
-		meta.sm_agno = control;
+		if (!parse_agno(argc, argv, optind, &meta->sm_agno)) {
+			exitcode = 1;
+			return command_usage(cmdinfo);
+		}
 		break;
-	case XFROG_SCRUB_TYPE_INODE:
-		meta.sm_ino = control;
-		meta.sm_gen = control2;
-		break;
-	case XFROG_SCRUB_TYPE_NONE:
 	case XFROG_SCRUB_TYPE_FS:
-		/* no control parameters */
+	case XFROG_SCRUB_TYPE_NONE:
+		if (!parse_none(argc, optind)) {
+			exitcode = 1;
+			return command_usage(cmdinfo);
+		}
+		break;
+	default:
+		ASSERT(0);
 		break;
 	}
-	meta.sm_flags = 0;
+	return 0;
+}
 
-	error = ioctl(fd, XFS_IOC_SCRUB_METADATA, &meta);
+static int
+scrub_f(
+	int				argc,
+	char				**argv)
+{
+	struct xfs_scrub_metadata	meta;
+	int				error;
+
+	error = parse_args(argc, argv, &scrub_cmd, &meta);
+	if (error)
+		return error;
+
+	error = ioctl(file->fd, XFS_IOC_SCRUB_METADATA, &meta);
 	if (error)
 		perror("scrub");
 	if (meta.sm_flags & XFS_SCRUB_OFLAG_CORRUPT)
@@ -84,106 +220,7 @@ scrub_ioctl(
 		printf(_("Corruption detected during cross-referencing.\n"));
 	if (meta.sm_flags & XFS_SCRUB_OFLAG_INCOMPLETE)
 		printf(_("Scan was not complete.\n"));
-}
-
-static int
-parse_args(
-	int				argc,
-	char				**argv,
-	struct cmdinfo			*cmdinfo,
-	void				(*fn)(int, int, uint64_t, uint32_t))
-{
-	char				*p;
-	int				type = -1;
-	int				i, c;
-	uint64_t			control = 0;
-	uint32_t			control2 = 0;
-	const struct xfrog_scrub_descr	*d = NULL;
-
-	while ((c = getopt(argc, argv, "")) != EOF) {
-		switch (c) {
-		default:
-			return command_usage(cmdinfo);
-		}
-	}
-	if (optind > argc - 1)
-		return command_usage(cmdinfo);
-
-	for (i = 0, d = xfrog_scrubbers; i < XFS_SCRUB_TYPE_NR; i++, d++) {
-		if (strcmp(d->name, argv[optind]) == 0) {
-			type = i;
-			break;
-		}
-	}
-	if (type < 0) {
-		printf(_("Unknown type '%s'.\n"), argv[optind]);
-		return command_usage(cmdinfo);
-	}
-	optind++;
-
-	switch (d->type) {
-	case XFROG_SCRUB_TYPE_INODE:
-		if (optind == argc) {
-			control = 0;
-			control2 = 0;
-		} else if (optind == argc - 2) {
-			control = strtoull(argv[optind], &p, 0);
-			if (*p != '\0') {
-				fprintf(stderr,
-					_("Bad inode number '%s'.\n"),
-					argv[optind]);
-				return 0;
-			}
-			control2 = strtoul(argv[optind + 1], &p, 0);
-			if (*p != '\0') {
-				fprintf(stderr,
-					_("Bad generation number '%s'.\n"),
-					argv[optind + 1]);
-				return 0;
-			}
-		} else {
-			fprintf(stderr,
-				_("Must specify inode number and generation.\n"));
-			return 0;
-		}
-		break;
-	case XFROG_SCRUB_TYPE_AGHEADER:
-	case XFROG_SCRUB_TYPE_PERAG:
-		if (optind != argc - 1) {
-			fprintf(stderr,
-				_("Must specify one AG number.\n"));
-			return 0;
-		}
-		control = strtoul(argv[optind], &p, 0);
-		if (*p != '\0') {
-			fprintf(stderr,
-				_("Bad AG number '%s'.\n"), argv[optind]);
-			return 0;
-		}
-		break;
-	case XFROG_SCRUB_TYPE_FS:
-	case XFROG_SCRUB_TYPE_NONE:
-		if (optind != argc) {
-			fprintf(stderr,
-				_("No parameters allowed.\n"));
-			return 0;
-		}
-		break;
-	default:
-		ASSERT(0);
-		break;
-	}
-	fn(file->fd, type, control, control2);
-
 	return 0;
-}
-
-static int
-scrub_f(
-	int				argc,
-	char				**argv)
-{
-	return parse_args(argc, argv, &scrub_cmd, scrub_ioctl);
 }
 
 void
@@ -216,47 +253,32 @@ repair_help(void)
 " or (optionally) take an inode number and generation number to act upon as\n"
 " the second and third parameters.\n"
 "\n"
+" Flags are -R to force rebuilding metadata.\n"
+"\n"
 " Example:\n"
 " 'repair inobt 3' - repairs the inode btree in AG 3.\n"
 " 'repair bmapbtd 128 13525' - repairs the extent map of inode 128 gen 13525.\n"
 "\n"
-" Known metadata repairs types are:"));
+" Known metadata repair types are:"));
 	for (i = 0, d = xfrog_scrubbers; i < XFS_SCRUB_TYPE_NR; i++, d++)
 		printf(" %s", d->name);
 	printf("\n");
 }
 
-static void
-repair_ioctl(
-	int				fd,
-	int				type,
-	uint64_t			control,
-	uint32_t			control2)
+static int
+repair_f(
+	int				argc,
+	char				**argv)
 {
 	struct xfs_scrub_metadata	meta;
-	const struct xfrog_scrub_descr	*sc;
 	int				error;
 
-	sc = &xfrog_scrubbers[type];
-	memset(&meta, 0, sizeof(meta));
-	meta.sm_type = type;
-	switch (sc->type) {
-	case XFROG_SCRUB_TYPE_AGHEADER:
-	case XFROG_SCRUB_TYPE_PERAG:
-		meta.sm_agno = control;
-		break;
-	case XFROG_SCRUB_TYPE_INODE:
-		meta.sm_ino = control;
-		meta.sm_gen = control2;
-		break;
-	case XFROG_SCRUB_TYPE_NONE:
-	case XFROG_SCRUB_TYPE_FS:
-		/* no control parameters */
-		break;
-	}
-	meta.sm_flags = XFS_SCRUB_IFLAG_REPAIR;
+	error = parse_args(argc, argv, &repair_cmd, &meta);
+	if (error)
+		return error;
+	meta.sm_flags |= XFS_SCRUB_IFLAG_REPAIR;
 
-	error = ioctl(fd, XFS_IOC_SCRUB_METADATA, &meta);
+	error = ioctl(file->fd, XFS_IOC_SCRUB_METADATA, &meta);
 	if (error)
 		perror("repair");
 	if (meta.sm_flags & XFS_SCRUB_OFLAG_CORRUPT)
@@ -271,14 +293,7 @@ repair_ioctl(
 		printf(_("Repair was not complete.\n"));
 	if (meta.sm_flags & XFS_SCRUB_OFLAG_NO_REPAIR_NEEDED)
 		printf(_("Metadata did not need repair or optimization.\n"));
-}
-
-static int
-repair_f(
-	int				argc,
-	char				**argv)
-{
-	return parse_args(argc, argv, &repair_cmd, repair_ioctl);
+	return 0;
 }
 
 void
