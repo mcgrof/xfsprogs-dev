@@ -14,6 +14,8 @@ import time
 import sys
 import os
 import argparse
+import signal
+from io import TextIOWrapper
 
 retcode = 0
 terminate = False
@@ -58,24 +60,27 @@ def find_mounts():
 
 	return fs
 
-def kill_systemd(unit, proc):
-	'''Kill systemd unit.'''
-	proc.terminate()
-	cmd=['systemctl', 'stop', unit]
-	x = subprocess.Popen(cmd)
-	x.wait()
+def backtick(cmd):
+	'''Generator function that yields lines of a program's stdout.'''
+	p = subprocess.Popen(cmd, stdout = subprocess.PIPE)
+	for line in TextIOWrapper(p.stdout, encoding="utf-8"):
+		yield line.strip()
 
-def run_killable(cmd, stdout, killfuncs, kill_fn):
-	'''Run a killable program.  Returns program retcode or -1 if we can't start it.'''
+def remove_killfunc(killfuncs, fn):
+	'''Ensure fn is not in killfuncs.'''
+	try:
+		killfuncs.remove(fn)
+	except:
+		pass
+
+def run_killable(cmd, stdout, killfuncs):
+	'''Run a killable program.  Returns program retcode or -1 if we can't
+	start it.'''
 	try:
 		proc = subprocess.Popen(cmd, stdout = stdout)
-		real_kill_fn = lambda: kill_fn(proc)
-		killfuncs.add(real_kill_fn)
+		killfuncs.add(proc.terminate)
 		proc.wait()
-		try:
-			killfuncs.remove(real_kill_fn)
-		except:
-			pass
+		remove_killfunc(killfuncs, proc.terminate)
 		return proc.returncode
 	except:
 		return -1
@@ -96,6 +101,56 @@ def path_to_serviceunit(path):
 	except:
 		return None
 
+def systemctl_stop(unitname):
+	'''Stop a systemd unit.'''
+	cmd = ['systemctl', 'stop', unitname]
+	x = subprocess.Popen(cmd)
+	x.wait()
+
+def systemctl_start(unitname, killfuncs):
+	'''Start a systemd unit and wait for it to complete.'''
+	stop_fn = None
+	cmd = ['systemctl', 'start', unitname]
+	try:
+		proc = subprocess.Popen(cmd, stdout = DEVNULL())
+		stop_fn = lambda: systemctl_stop(unitname)
+		killfuncs.add(stop_fn)
+		proc.wait()
+		ret = proc.returncode
+	except:
+		if stop_fn is not None:
+			remove_killfunc(killfuncs, stop_fn)
+		return -1
+
+	if ret != 1:
+		remove_killfunc(killfuncs, stop_fn)
+		return ret
+
+	# If systemctl-start returns 1, it's possible that the service failed
+	# or that dbus/systemd restarted and the client program lost its
+	# connection -- according to the systemctl man page, 1 means "unit not
+	# failed".
+	#
+	# Either way, we switch to polling the service status to try to wait
+	# for the service to end.  As of systemd 249, the is-active command
+	# returns any of the following states: active, reloading, inactive,
+	# failed, activating, deactivating, or maintenance.  Apparently these
+	# strings are not localized.
+	while True:
+		try:
+			for l in backtick(['systemctl', 'is-active', unitname]):
+				if l == 'failed':
+					remove_killfunc(killfuncs, stop_fn)
+					return 1
+				if l == 'inactive':
+					remove_killfunc(killfuncs, stop_fn)
+					return 0
+		except:
+			remove_killfunc(killfuncs, stop_fn)
+			return -1
+
+		time.sleep(1)
+
 def run_scrub(mnt, cond, running_devs, mntdevs, killfuncs):
 	'''Run a scrub process.'''
 	global retcode, terminate
@@ -110,9 +165,7 @@ def run_scrub(mnt, cond, running_devs, mntdevs, killfuncs):
 		# Try it the systemd way
 		unitname = path_to_serviceunit(path)
 		if unitname is not None:
-			cmd=['systemctl', 'start', unitname]
-			ret = run_killable(cmd, DEVNULL(), killfuncs, \
-					lambda proc: kill_systemd(unitname, proc))
+			ret = systemctl_start(unitname, killfuncs)
 			if ret == 0 or ret == 1:
 				print("Scrubbing %s done, (err=%d)" % (mnt, ret))
 				sys.stdout.flush()
@@ -123,9 +176,10 @@ def run_scrub(mnt, cond, running_devs, mntdevs, killfuncs):
 				return
 
 		# Invoke xfs_scrub manually
-		cmd=['@sbindir@/xfs_scrub', '@scrub_args@', mnt]
-		ret = run_killable(cmd, None, killfuncs, \
-				lambda proc: proc.terminate())
+		cmd = ['@sbindir@/xfs_scrub']
+		cmd += '@scrub_args@'.split()
+		cmd += [mnt]
+		ret = run_killable(cmd, None, killfuncs)
 		if ret >= 0:
 			print("Scrubbing %s done, (err=%d)" % (mnt, ret))
 			sys.stdout.flush()
@@ -142,6 +196,45 @@ def run_scrub(mnt, cond, running_devs, mntdevs, killfuncs):
 		cond.acquire()
 		cond.notify()
 		cond.release()
+
+def signal_scrubs(signum, cond):
+	'''Handle termination signals by killing xfs_scrub children.'''
+	global debug, terminate
+
+	if debug:
+		print('Signal handler called with signal', signum)
+		sys.stdout.flush()
+
+	terminate = True
+	cond.acquire()
+	cond.notify()
+	cond.release()
+
+def wait_for_termination(cond, killfuncs):
+	'''Wait for a child thread to terminate.  Returns True if we should
+	abort the program, False otherwise.'''
+	global debug, terminate
+
+	if debug:
+		print('waiting for threads to terminate')
+		sys.stdout.flush()
+
+	cond.acquire()
+	try:
+		cond.wait()
+	except KeyboardInterrupt:
+		terminate = True
+	cond.release()
+
+	if not terminate:
+		return False
+
+	print("Terminating...")
+	sys.stdout.flush()
+	while len(killfuncs) > 0:
+		fn = killfuncs.pop()
+		fn()
+	return True
 
 def main():
 	'''Find mounts, schedule scrub runs.'''
@@ -178,6 +271,10 @@ def main():
 	running_devs = set()
 	killfuncs = set()
 	cond = threading.Condition()
+
+	signal.signal(signal.SIGINT, lambda s, f: signal_scrubs(s, cond))
+	signal.signal(signal.SIGTERM, lambda s, f: signal_scrubs(s, cond))
+
 	while len(fs) > 0:
 		if len(running_devs) == 0:
 			mnt, devs = fs.popitem()
@@ -197,18 +294,14 @@ def main():
 				thr(mnt, devs)
 		for p in poppers:
 			fs.pop(p)
-		cond.acquire()
-		try:
-			cond.wait()
-		except KeyboardInterrupt:
-			terminate = True
-			print("Terminating...")
-			sys.stdout.flush()
-			while len(killfuncs) > 0:
-				fn = killfuncs.pop()
-				fn()
-			fs = []
-		cond.release()
+
+		# Wait for one thread to finish
+		if wait_for_termination(cond, killfuncs):
+			break
+
+	# Wait for the rest of the threads to finish
+	while len(killfuncs) > 0:
+		wait_for_termination(cond, killfuncs)
 
 	if journalthread is not None:
 		journalthread.terminate()
