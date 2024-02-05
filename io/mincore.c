@@ -17,7 +17,7 @@ mincore_f(
 	int		argc,
 	char		**argv)
 {
-	off64_t		offset, llength;
+	off_t		offset, llength;
 	size_t		length;
 	size_t		blocksize, sectsize;
 	void		*start;

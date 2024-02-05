@@ -54,7 +54,7 @@ pwrite_help(void)
 static ssize_t
 do_pwritev(
 	int		fd,
-	off64_t		offset,
+	off_t		offset,
 	long long	count,
 	int		pwritev2_flags)
 {
@@ -97,7 +97,7 @@ do_pwritev(
 static ssize_t
 do_pwrite(
 	int		fd,
-	off64_t		offset,
+	off_t		offset,
 	long long	count,
 	size_t		buffer_size,
 	int		pwritev2_flags)
@@ -110,13 +110,13 @@ do_pwrite(
 
 static int
 write_random(
-	off64_t		offset,
+	off_t		offset,
 	long long	count,
 	unsigned int	seed,
 	long long	*total,
 	int 		pwritev2_flags)
 {
-	off64_t		off, range;
+	off_t		off, range;
 	ssize_t		bytes;
 	int		ops = 0;
 
@@ -155,12 +155,12 @@ write_random(
 
 static int
 write_backward(
-	off64_t		offset,
+	off_t		offset,
 	long long	*count,
 	long long	*total,
 	int		pwritev2_flags)
 {
-	off64_t		end, off = offset;
+	off_t		end, off = offset;
 	ssize_t		bytes = 0, bytes_requested;
 	long long	cnt = *count;
 	int		ops = 0;
@@ -214,11 +214,11 @@ write_backward(
 
 static int
 write_buffer(
-	off64_t		offset,
+	off_t		offset,
 	long long	count,
 	size_t		bs,
 	int		fd,
-	off64_t		skip,
+	off_t		skip,
 	long long	*total,
 	int		pwritev2_flags)
 {
@@ -253,7 +253,7 @@ write_buffer(
 
 static int
 write_once(
-	off64_t		offset,
+	off_t		offset,
 	long long	count,
 	long long	*total,
 	int		pwritev2_flags)
@@ -275,7 +275,7 @@ pwrite_f(
 	char		**argv)
 {
 	size_t		bsize;
-	off64_t		offset, skip = 0;
+	off_t		offset, skip = 0;
 	long long	count, total, tmp;
 	unsigned int	zeed = 0, seed = 0xcdcdcdcd;
 	size_t		fsblocksize, fssectsize;

@@ -234,9 +234,9 @@ fiemap_f(
 	int		tot_w = 5;	/* 5 since its just one number */
 	int		flg_w = 5;
 	__u64		last_logical = 0;	/* last extent offset handled */
-	off64_t		start_offset = 0;	/* mapping start */
-	off64_t		length = -1LL;		/* mapping length */
-	off64_t		range_end = -1LL;	/* mapping end*/
+	off_t		start_offset = 0;	/* mapping start */
+	off_t		length = -1LL;		/* mapping length */
+	off_t		range_end = -1LL;	/* mapping end*/
 	size_t		fsblocksize, fssectsize;
 	struct stat	st;
 

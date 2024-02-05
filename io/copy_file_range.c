@@ -54,7 +54,7 @@ copy_file_range_cmd(int fd, long long *src_off, long long *dst_off, size_t len)
 	return 0;
 }
 
-static off64_t
+static off_t
 copy_src_filesize(int fd)
 {
 	struct stat st;
@@ -154,7 +154,7 @@ copy_range_f(int argc, char **argv)
 	}
 
 	if (!len_specified) {
-		off64_t	sz;
+		off_t	sz;
 
 		sz = copy_src_filesize(fd);
 		if (sz < 0 || (unsigned long long)sz > SIZE_MAX) {

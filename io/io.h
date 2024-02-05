@@ -53,7 +53,7 @@ extern int stat_f(int argc, char **argv);
 typedef struct mmap_region {
 	void		*addr;		/* address of start of mapping */
 	size_t		length;		/* length of mapping */
-	off64_t		offset;		/* start offset into backing file */
+	off_t		offset;		/* start offset into backing file */
 	int		prot;		/* protection mode of the mapping */
 	int		flags;		/* MAP_* flags passed to mmap() */
 	char		*name;		/* name of backing file */
@@ -63,13 +63,13 @@ extern mmap_region_t	*maptable;	/* mmap'd region array */
 extern int		mapcount;	/* #entries in the mapping table */
 extern mmap_region_t	*mapping;	/* active mapping table entry */
 extern int maplist_f(void);
-extern void *check_mapping_range(mmap_region_t *, off64_t, size_t, int);
+extern void *check_mapping_range(mmap_region_t *, off_t, size_t, int);
 
 /*
  * Various xfs_io helper routines/globals
  */
 
-extern off64_t		filesize(void);
+extern off_t		filesize(void);
 extern int		openfile(char *, struct xfs_fsop_geom *, int, mode_t,
 				 struct fs_path *);
 extern int		addfile(char *, int , struct xfs_fsop_geom *, int,
@@ -84,9 +84,9 @@ extern size_t		io_buffersize;
 extern int		vectors;
 extern struct iovec	*iov;
 extern int		alloc_buffer(size_t, int, unsigned int);
-extern int		read_buffer(int, off64_t, long long, long long *,
+extern int		read_buffer(int, off_t, long long, long long *,
 					int, int);
-extern void		dump_buffer(off64_t, ssize_t);
+extern void		dump_buffer(off_t, ssize_t);
 
 extern void		attr_init(void);
 extern void		bmap_init(void);

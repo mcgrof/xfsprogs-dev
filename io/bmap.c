@@ -257,7 +257,7 @@ bmap_f(
 #define	FLG_BSW		0000010	/* Not on begin of stripe width */
 #define	FLG_ESW		0000001	/* Not on end   of stripe width */
 		int	agno;
-		off64_t agoff, bbperag;
+		off_t agoff, bbperag;
 		int	foff_w, boff_w, aoff_w, tot_w, agno_w;
 		char	rbuf[32], bbuf[32], abuf[32];
 		int	sunit, swidth;
@@ -267,8 +267,8 @@ bmap_f(
 		if (is_rt)
 			sunit = swidth = bbperag = 0;
 		else {
-			bbperag = (off64_t)fsgeo.agblocks *
-				  (off64_t)fsgeo.blocksize / BBSIZE;
+			bbperag = (off_t)fsgeo.agblocks *
+				  (off_t)fsgeo.blocksize / BBSIZE;
 			sunit = (fsgeo.sunit * fsgeo.blocksize) / BBSIZE;
 			swidth = (fsgeo.swidth * fsgeo.blocksize) / BBSIZE;
 		}

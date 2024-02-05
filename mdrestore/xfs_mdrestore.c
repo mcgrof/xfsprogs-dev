@@ -160,7 +160,7 @@ verify_device_size(
 	} else {
 		/* ensure device is sufficiently large enough */
 		char		lb[XFS_MAX_SECTORSIZE] = { 0 };
-		off64_t		off;
+		off_t		off;
 
 		off = nr_blocks * blocksize - sizeof(lb);
 		if (pwrite(dev_fd, lb, sizeof(lb), off) < 0)

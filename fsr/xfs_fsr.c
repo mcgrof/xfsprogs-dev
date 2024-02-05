@@ -1148,7 +1148,7 @@ packfile(char *fname, char *tname, int fd,
 	struct dioattr	dio;
 	static xfs_swapext_t   sx;
 	struct xfs_flock64  space;
-	off64_t 	cnt, pos;
+	off_t 	cnt, pos;
 	void 		*fbuf = NULL;
 	int 		ct, wc, wc_b4;
 	char		ffname[SMBUFSZ];

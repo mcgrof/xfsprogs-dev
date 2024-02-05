@@ -97,11 +97,11 @@ scan_ag_rmaps(
 	struct scrub_ctx	*ctx = (struct scrub_ctx *)wq->wq_ctx;
 	struct scan_blocks	*sbx = arg;
 	struct fsmap		keys[2];
-	off64_t			bperag;
+	off_t			bperag;
 	int			ret;
 
-	bperag = (off64_t)ctx->mnt.fsgeom.agblocks *
-		 (off64_t)ctx->mnt.fsgeom.blocksize;
+	bperag = (off_t)ctx->mnt.fsgeom.agblocks *
+		 (off_t)ctx->mnt.fsgeom.blocksize;
 
 	memset(keys, 0, sizeof(struct fsmap) * 2);
 	keys->fmr_device = ctx->fsinfo.fs_datadev;

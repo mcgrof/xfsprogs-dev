@@ -98,7 +98,7 @@ dedupe_f(
 	int		argc,
 	char		**argv)
 {
-	off64_t		soffset, doffset;
+	off_t		soffset, doffset;
 	long long	count, total;
 	char		*infile;
 	int		condensed, quiet_flag;
@@ -226,7 +226,7 @@ reflink_f(
 	int		argc,
 	char		**argv)
 {
-	off64_t		soffset, doffset;
+	off_t		soffset, doffset;
 	long long	count = 0, total;
 	char		*infile = NULL;
 	int		condensed, quiet_flag;

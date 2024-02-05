@@ -576,7 +576,7 @@ libxfs_balloc(
 
 
 static int
-__read_buf(int fd, void *buf, int len, off64_t offset, int flags)
+__read_buf(int fd, void *buf, int len, off_t offset, int flags)
 {
 	int	sts;
 
@@ -638,7 +638,7 @@ libxfs_readbufr_map(struct xfs_buftarg *btp, struct xfs_buf *bp, int flags)
 
 	buf = bp->b_addr;
 	for (i = 0; i < bp->b_nmaps; i++) {
-		off64_t	offset = LIBXFS_BBTOOFF64(bp->b_maps[i].bm_bn);
+		off_t	offset = LIBXFS_BBTOOFF64(bp->b_maps[i].bm_bn);
 		int len = BBTOB(bp->b_maps[i].bm_len);
 
 		error = __read_buf(fd, buf, len, offset, flags);
@@ -797,7 +797,7 @@ err:
 }
 
 static int
-__write_buf(int fd, void *buf, int len, off64_t offset, int flags)
+__write_buf(int fd, void *buf, int len, off_t offset, int flags)
 {
 	int	sts;
 
@@ -863,7 +863,7 @@ libxfs_bwrite(
 		void	*buf = bp->b_addr;
 
 		for (i = 0; i < bp->b_nmaps; i++) {
-			off64_t	offset = LIBXFS_BBTOOFF64(bp->b_maps[i].bm_bn);
+			off_t	offset = LIBXFS_BBTOOFF64(bp->b_maps[i].bm_bn);
 			int len = BBTOB(bp->b_maps[i].bm_len);
 
 			bp->b_error = __write_buf(fd, buf, len, offset,

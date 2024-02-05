@@ -26,7 +26,7 @@ trim_f(
 	struct xfs_fd		*xfd = &file->xfd;
 	struct xfs_fsop_geom	*fsgeom = &xfd->fsgeom;
 	xfs_agnumber_t		agno = 0;
-	off64_t			offset = 0;
+	off_t			offset = 0;
 	ssize_t			length = 0;
 	ssize_t			minlen = 0;
 	int			aflag = 0;

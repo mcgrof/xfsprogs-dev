@@ -63,8 +63,8 @@ static void
 seek_output(
 	int	startflag,
 	char	*type,
-	off64_t	start,
-	off64_t	offset)
+	off_t	start,
+	off_t	offset)
 {
 	if (offset == -1) {
 		if (errno == ENXIO) {
@@ -92,7 +92,7 @@ seek_f(
 	int	argc,
 	char	**argv)
 {
-	off64_t		offset, start;
+	off_t		offset, start;
 	size_t		fsblocksize, fssectsize;
 	int		c;
 	int		current;	/* specify data or hole */

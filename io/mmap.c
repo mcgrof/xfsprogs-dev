@@ -63,11 +63,11 @@ print_mapping(
 void *
 check_mapping_range(
 	mmap_region_t	*map,
-	off64_t		offset,
+	off_t		offset,
 	size_t		length,
 	int		pagealign)
 {
-	off64_t		relative;
+	off_t		relative;
 
 	if (offset < mapping->offset) {
 		printf(_("offset (%lld) is before start of mapping (%lld)\n"),
@@ -155,7 +155,8 @@ mmap_f(
 	int		argc,
 	char		**argv)
 {
-	off64_t		offset;
+	off_t		offset;
+
 	ssize_t		length = 0, length2 = 0;
 	void		*address = NULL;
 	char		*filename;
@@ -308,7 +309,7 @@ msync_f(
 	int		argc,
 	char		**argv)
 {
-	off64_t		offset;
+	off_t		offset;
 	ssize_t		length;
 	void		*start;
 	int		c, flags = 0;
@@ -401,7 +402,7 @@ mread_f(
 	int		argc,
 	char		**argv)
 {
-	off64_t		offset, tmp, dumpoffset, printoffset;
+	off_t		offset, tmp, dumpoffset, printoffset;
 	ssize_t		length;
 	size_t		dumplen, cnt = 0;
 	char		*bp;
@@ -566,7 +567,7 @@ mwrite_f(
 	int		argc,
 	char		**argv)
 {
-	off64_t		offset, tmp;
+	off_t		offset, tmp;
 	ssize_t		length;
 	void		*start;
 	char		*sp;

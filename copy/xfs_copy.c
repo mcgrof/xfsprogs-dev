@@ -881,7 +881,7 @@ main(int argc, char **argv)
 			}
 		} else  {
 			char	*lb = memalign(wbuf_align, XFS_MAX_SECTORSIZE);
-			off64_t	off;
+			off_t	off;
 			ssize_t	len;
 
 			/* ensure device files are sufficiently large */

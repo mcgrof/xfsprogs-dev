@@ -21,7 +21,7 @@ static cmdinfo_t stat_cmd;
 static cmdinfo_t statfs_cmd;
 static cmdinfo_t statx_cmd;
 
-off64_t
+off_t
 filesize(void)
 {
 	struct stat	st;

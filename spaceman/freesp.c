@@ -62,7 +62,7 @@ static void
 addtohist(
 	xfs_agnumber_t	agno,
 	xfs_agblock_t	agbno,
-	off64_t		len)
+	off_t		len)
 {
 	long		i;
 
@@ -152,7 +152,7 @@ scan_ag(
 	struct fsmap		*l, *h;
 	struct fsmap		*p;
 	struct xfs_fd		*xfd = &file->xfd;
-	off64_t			aglen;
+	off_t			aglen;
 	xfs_agblock_t		agbno;
 	unsigned long long	freeblks = 0;
 	unsigned long long	freeexts = 0;

@@ -170,7 +170,7 @@ dump_map_verbose(
 	unsigned long long	i;
 	struct fsmap		*p;
 	int			agno;
-	off64_t			agoff, bperag;
+	off_t			agoff, bperag;
 	int			foff_w, boff_w, aoff_w, tot_w, agno_w, own_w;
 	int			nr_w, dev_w;
 	char			rbuf[40], bbuf[40], abuf[40], obuf[40];
@@ -183,8 +183,8 @@ dump_map_verbose(
 	dev_w = 3;
 	nr_w = 4;
 	tot_w = MINTOT_WIDTH;
-	bperag = (off64_t)fsgeo->agblocks *
-		  (off64_t)fsgeo->blocksize;
+	bperag = (off_t)fsgeo->agblocks *
+		  (off_t)fsgeo->blocksize;
 	sunit = (fsgeo->sunit * fsgeo->blocksize);
 	swidth = (fsgeo->swidth * fsgeo->blocksize);
 

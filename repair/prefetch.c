@@ -475,7 +475,7 @@ pf_batch_read(
 {
 	struct xfs_buf		*bplist[MAX_BUFS];
 	unsigned int		num;
-	off64_t			first_off, last_off, next_off;
+	off_t			first_off, last_off, next_off;
 	int			len, size;
 	int			i;
 	int			inode_bufs;

@@ -116,7 +116,7 @@ alloc_buffer(
 static void
 __dump_buffer(
 	void		*buf,
-	off64_t		offset,
+	off_t		offset,
 	ssize_t		len)
 {
 	int		i, j;
@@ -141,7 +141,7 @@ __dump_buffer(
 
 void
 dump_buffer(
-	off64_t		offset,
+	off_t		offset,
 	ssize_t		len)
 {
 	int		i, l;
@@ -164,7 +164,7 @@ dump_buffer(
 static ssize_t
 do_preadv(
 	int		fd,
-	off64_t		offset,
+	off_t		offset,
 	long long	count)
 {
 	int		vecs = 0;
@@ -199,7 +199,7 @@ do_preadv(
 static ssize_t
 do_pread(
 	int		fd,
-	off64_t		offset,
+	off_t		offset,
 	long long	count,
 	size_t		buffer_size)
 {
@@ -212,13 +212,13 @@ do_pread(
 static int
 read_random(
 	int		fd,
-	off64_t		offset,
+	off_t		offset,
 	long long	count,
 	long long	*total,
 	unsigned int	seed,
 	int		eof)
 {
-	off64_t		end, off, range;
+	off_t		end, off, range;
 	ssize_t		bytes;
 	int		ops = 0;
 
@@ -259,12 +259,12 @@ read_random(
 static int
 read_backward(
 	int		fd,
-	off64_t		*offset,
+	off_t		*offset,
 	long long	*count,
 	long long	*total,
 	int		eof)
 {
-	off64_t		end, off = *offset;
+	off_t		end, off = *offset;
 	ssize_t		bytes = 0, bytes_requested;
 	long long	cnt = *count;
 	int		ops = 0;
@@ -319,7 +319,7 @@ read_backward(
 static int
 read_forward(
 	int		fd,
-	off64_t		offset,
+	off_t		offset,
 	long long	count,
 	long long	*total,
 	int		verbose,
@@ -353,7 +353,7 @@ read_forward(
 int
 read_buffer(
 	int		fd,
-	off64_t		offset,
+	off_t		offset,
 	long long	count,
 	long long	*total,
 	int		verbose,
@@ -368,7 +368,7 @@ pread_f(
 	char		**argv)
 {
 	size_t		bsize;
-	off64_t		offset;
+	off_t		offset;
 	unsigned int	zeed = 0;
 	long long	count, total, tmp;
 	size_t		fsblocksize, fssectsize;

@@ -30,7 +30,7 @@ sync_range_f(
 	int		argc,
 	char		**argv)
 {
-	off64_t		offset = 0, length = 0;
+	off_t		offset = 0, length = 0;
 	int		c, sync_mode = 0;
 	size_t		blocksize, sectsize;
 

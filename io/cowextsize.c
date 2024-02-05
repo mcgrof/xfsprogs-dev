@@ -50,10 +50,10 @@ static int
 set_cowextsize(const char *path, int fd, long extsz)
 {
 	struct fsxattr	fsx;
-	struct stat64	stat;
+	struct stat	stat;
 
-	if (fstat64(fd, &stat) < 0) {
-		perror("fstat64");
+	if (fstat(fd, &stat) < 0) {
+		perror("fstat");
 		exitcode = 1;
 		return 0;
 	}

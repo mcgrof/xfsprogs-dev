@@ -34,12 +34,12 @@ sendfile_help(void)
 
 static int
 send_buffer(
-	off64_t		offset,
+	off_t		offset,
 	size_t		count,
 	int		fd,
 	long long	*total)
 {
-	off64_t		off = offset;
+	off_t		off = offset;
 	ssize_t		bytes, bytes_remaining = count;
 	int		ops = 0;
 
@@ -66,7 +66,7 @@ sendfile_f(
 	int		argc,
 	char		**argv)
 {
-	off64_t		offset = 0;
+	off_t		offset = 0;
 	long long	count, total;
 	size_t		blocksize, sectsize;
 	struct timeval	t1, t2;

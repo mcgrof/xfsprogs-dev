@@ -39,7 +39,7 @@ madvise_f(
 	int		argc,
 	char		**argv)
 {
-	off64_t		offset, llength;
+	off_t		offset, llength;
 	size_t		length;
 	void		*start;
 	int		advise = MADV_NORMAL, c;
