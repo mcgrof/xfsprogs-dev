@@ -7,6 +7,10 @@ ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
     PMAKEFLAGS += -j$(NUMJOBS)
 endif
 
+ifeq (,$(filter terse,$(DEB_BUILD_OPTIONS)))
+    PMAKEFLAGS += V=1
+endif
+
 package = xfsprogs
 develop = xfslibs-dev
 bootpkg = xfsprogs-udeb
