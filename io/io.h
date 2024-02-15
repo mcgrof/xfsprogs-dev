@@ -129,15 +129,8 @@ extern void		copy_range_init(void);
 #endif
 
 extern void		sync_range_init(void);
-
-#ifdef HAVE_READDIR
 extern void		readdir_init(void);
-#else
-#define readdir_init()		do { } while (0)
-#endif
-
 extern void		reflink_init(void);
-
 extern void		cowextsize_init(void);
 
 #ifdef HAVE_GETFSMAP

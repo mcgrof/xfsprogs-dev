@@ -92,23 +92,6 @@ syncfs(0);
   ])
 
 #
-# Check if we have a readdir libc call
-#
-AC_DEFUN([AC_HAVE_READDIR],
-  [ AC_MSG_CHECKING([for readdir])
-    AC_LINK_IFELSE(
-    [	AC_LANG_PROGRAM([[
-#include <dirent.h>
-	]], [[
-readdir(0);
-	]])
-    ], have_readdir=yes
-       AC_MSG_RESULT(yes),
-       AC_MSG_RESULT(no))
-    AC_SUBST(have_readdir)
-  ])
-
-#
 # Check if we have a flc call (Mac OS X)
 #
 AC_DEFUN([AC_HAVE_FLS],
