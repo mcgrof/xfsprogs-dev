@@ -35,11 +35,6 @@ seek_help(void)
 "\n"));
 }
 
-#ifndef HAVE_SEEK_DATA
-#define	SEEK_DATA	3	/* seek to the next data */
-#define	SEEK_HOLE	4	/* seek to the next hole */
-#endif
-
 /* values for flag variable */
 #define	SEEK_DFLAG	(1 << 0)
 #define	SEEK_HFLAG	(1 << 1)
