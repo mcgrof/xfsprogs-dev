@@ -6,11 +6,11 @@ TOPDIR = ..
 builddefs=$(TOPDIR)/include/builddefs
 include $(builddefs)
 
-SCRUB_PREREQS=$(HAVE_OPENAT)$(HAVE_FSTATAT)$(HAVE_GETFSMAP)
+SCRUB_PREREQS=$(HAVE_FSTATAT)$(HAVE_GETFSMAP)
 
 scrub_svcname=xfs_scrub@.service
 
-ifeq ($(SCRUB_PREREQS),yesyesyes)
+ifeq ($(SCRUB_PREREQS),yesyes)
 LTCOMMAND = xfs_scrub
 INSTALL_SCRUB = install-scrub
 XFS_SCRUB_ALL_PROG = xfs_scrub_all
