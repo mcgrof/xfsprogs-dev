@@ -120,12 +120,7 @@ extern void		fadvise_init(void);
 extern void		sendfile_init(void);
 extern void		madvise_init(void);
 extern void		mincore_init(void);
-
-#ifdef HAVE_FIEMAP
 extern void		fiemap_init(void);
-#else
-#define fiemap_init()	do { } while (0)
-#endif
 
 #ifdef HAVE_COPY_FILE_RANGE
 extern void		copy_range_init(void);

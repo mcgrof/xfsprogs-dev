@@ -18,27 +18,6 @@ fallocate(0, 0, 0, 0);
   ])
 
 #
-# Check if we have the fiemap ioctl (Linux)
-#
-AC_DEFUN([AC_HAVE_FIEMAP],
-  [ AC_MSG_CHECKING([for fiemap])
-    AC_LINK_IFELSE(
-    [	AC_LANG_PROGRAM([[
-#define _GNU_SOURCE
-#include <linux/fs.h>
-#include <linux/fiemap.h>
-#include <sys/ioctl.h>
-	]], [[
-struct fiemap *fiemap;
-ioctl(0, FS_IOC_FIEMAP, (unsigned long)fiemap);
-	]])
-    ], have_fiemap=yes
-       AC_MSG_RESULT(yes),
-       AC_MSG_RESULT(no))
-    AC_SUBST(have_fiemap)
-  ])
-
-#
 # Check if we have a preadv libc call (Linux)
 #
 AC_DEFUN([AC_HAVE_PREADV],
