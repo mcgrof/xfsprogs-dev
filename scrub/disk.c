@@ -10,9 +10,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/statvfs.h>
-#ifdef HAVE_SG_IO
-# include <scsi/sg.h>
-#endif
+#include <scsi/sg.h>
 #ifdef HAVE_HDIO_GETGEO
 # include <linux/hdreg.h>
 #endif
@@ -90,14 +88,13 @@ disk_heads(
  * works if we're talking to a raw SCSI device, and only if we trust the
  * firmware.
  */
-#ifdef HAVE_SG_IO
-# define SENSE_BUF_LEN		64
-# define VERIFY16_CMDLEN	16
-# define VERIFY16_CMD		0x8F
+#define SENSE_BUF_LEN		64
+#define VERIFY16_CMDLEN	16
+#define VERIFY16_CMD		0x8F
 
-# ifndef SG_FLAG_Q_AT_TAIL
-#  define SG_FLAG_Q_AT_TAIL	0x10
-# endif
+#ifndef SG_FLAG_Q_AT_TAIL
+# define SG_FLAG_Q_AT_TAIL	0x10
+#endif
 static int
 disk_scsi_verify(
 	struct disk		*disk,
@@ -167,9 +164,6 @@ disk_scsi_verify(
 
 	return blockcount << BBSHIFT;
 }
-#else
-# define disk_scsi_verify(...)		(ENOTTY)
-#endif /* HAVE_SG_IO */
 
 /* Test the availability of the kernel scrub ioctl. */
 static bool

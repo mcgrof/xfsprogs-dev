@@ -98,10 +98,6 @@ CFILES += unicrash.c
 LCFLAGS += -DHAVE_LIBICU $(LIBICU_CFLAGS)
 endif
 
-ifeq ($(HAVE_SG_IO),yes)
-LCFLAGS += -DHAVE_SG_IO
-endif
-
 ifeq ($(HAVE_HDIO_GETGEO),yes)
 LCFLAGS += -DHAVE_HDIO_GETGEO
 endif

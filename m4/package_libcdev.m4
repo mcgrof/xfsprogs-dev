@@ -178,25 +178,6 @@ test = mallinfo2();
   ])
 
 #
-# Check if we have the SG_IO ioctl
-#
-AC_DEFUN([AC_HAVE_SG_IO],
-  [ AC_MSG_CHECKING([for struct sg_io_hdr ])
-    AC_COMPILE_IFELSE(
-    [	AC_LANG_PROGRAM([[
-#include <scsi/sg.h>
-#include <sys/ioctl.h>
-	]], [[
-struct sg_io_hdr hdr;
-ioctl(0, SG_IO, &hdr);
-	]])
-    ], have_sg_io=yes
-       AC_MSG_RESULT(yes),
-       AC_MSG_RESULT(no))
-    AC_SUBST(have_sg_io)
-  ])
-
-#
 # Check if we have the HDIO_GETGEO ioctl
 #
 AC_DEFUN([AC_HAVE_HDIO_GETGEO],
