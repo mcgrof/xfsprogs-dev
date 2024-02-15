@@ -40,9 +40,7 @@ pwrite_help(void)
 " -R   -- write at random offsets in the specified range of bytes\n"
 " -Z N -- zeed the random number generator (used when writing randomly)\n"
 "         (heh, zorry, the -s/-S arguments were already in use in pwrite)\n"
-#ifdef HAVE_PWRITEV
 " -V N -- use vectored IO with N iovecs of blocksize each (pwritev)\n"
-#endif
 #ifdef HAVE_PWRITEV2
 " -N   -- Perform the pwritev2() with RWF_NOWAIT\n"
 " -D   -- Perform the pwritev2() with RWF_DSYNC\n"
@@ -50,7 +48,6 @@ pwrite_help(void)
 "\n"));
 }
 
-#ifdef HAVE_PWRITEV
 static ssize_t
 do_pwritev(
 	int		fd,
@@ -90,9 +87,6 @@ do_pwritev(
 
 	return bytes;
 }
-#else
-#define do_pwritev(fd, offset, count, pwritev2_flags) (0)
-#endif
 
 static ssize_t
 do_pwrite(
@@ -353,7 +347,6 @@ pwrite_f(
 		case 'u':
 			uflag = 1;
 			break;
-#ifdef HAVE_PWRITEV
 		case 'V':
 			vectors = strtoul(optarg, &sp, 0);
 			if (!sp || sp == optarg) {
@@ -363,7 +356,6 @@ pwrite_f(
 				return 0;
 			}
 			break;
-#endif
 		case 'w':
 			wflag = 1;
 			break;

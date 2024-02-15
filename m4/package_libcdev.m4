@@ -1,23 +1,4 @@
 #
-# Check if we have a preadv libc call (Linux)
-#
-AC_DEFUN([AC_HAVE_PREADV],
-  [ AC_MSG_CHECKING([for preadv])
-    AC_LINK_IFELSE(
-    [	AC_LANG_PROGRAM([[
-#define _BSD_SOURCE
-#define _DEFAULT_SOURCE
-#include <sys/uio.h>
-	]], [[
-preadv(0, 0, 0, 0);
-	]])
-    ], have_preadv=yes
-       AC_MSG_RESULT(yes),
-       AC_MSG_RESULT(no))
-    AC_SUBST(have_preadv)
-  ])
-
-#
 # Check if we have a pwritev2 libc call (Linux)
 #
 AC_DEFUN([AC_HAVE_PWRITEV2],

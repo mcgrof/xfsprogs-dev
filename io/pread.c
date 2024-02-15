@@ -37,9 +37,7 @@ pread_help(void)
 " -R   -- read at random offsets in the range of bytes\n"
 " -Z N -- zeed the random number generator (used when reading randomly)\n"
 "         (heh, zorry, the -s/-S arguments were already in use in pwrite)\n"
-#ifdef HAVE_PREADV
 " -V N -- use vectored IO with N iovecs of blocksize each (preadv)\n"
-#endif
 "\n"
 " When in \"random\" mode, the number of read operations will equal the\n"
 " number required to do a complete forward/backward scan of the range.\n"
@@ -160,7 +158,6 @@ dump_buffer(
 	}
 }
 
-#ifdef HAVE_PREADV
 static ssize_t
 do_preadv(
 	int		fd,
@@ -192,9 +189,6 @@ do_preadv(
 
 	return bytes;
 }
-#else
-#define do_preadv(fd, offset, count) (0)
-#endif
 
 static ssize_t
 do_pread(
@@ -414,7 +408,6 @@ pread_f(
 		case 'v':
 			vflag = 1;
 			break;
-#ifdef HAVE_PREADV
 		case 'V':
 			vectors = strtoul(optarg, &sp, 0);
 			if (!sp || sp == optarg) {
@@ -424,7 +417,6 @@ pread_f(
 				return 0;
 			}
 			break;
-#endif
 		case 'Z':
 			zeed = strtoul(optarg, &sp, 0);
 			if (!sp || sp == optarg) {
