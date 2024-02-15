@@ -16,9 +16,7 @@ static cmdinfo_t mread_cmd;
 static cmdinfo_t msync_cmd;
 static cmdinfo_t munmap_cmd;
 static cmdinfo_t mwrite_cmd;
-#ifdef HAVE_MREMAP
 static cmdinfo_t mremap_cmd;
-#endif /* HAVE_MREMAP */
 
 mmap_region_t	*maptable;
 int		mapcount;
@@ -637,7 +635,6 @@ mwrite_f(
 	return 0;
 }
 
-#ifdef HAVE_MREMAP
 static void
 mremap_help(void)
 {
@@ -713,7 +710,6 @@ mremap_f(
 	mapping->length = new_length;
 	return 0;
 }
-#endif /* HAVE_MREMAP */
 
 void
 mmap_init(void)
@@ -770,7 +766,6 @@ mmap_init(void)
 		_("writes data into a region in the current memory mapping");
 	mwrite_cmd.help = mwrite_help;
 
-#ifdef HAVE_MREMAP
 	mremap_cmd.name = "mremap";
 	mremap_cmd.altname = "mrm";
 	mremap_cmd.cfunc = mremap_f;
@@ -781,14 +776,11 @@ mmap_init(void)
 	mremap_cmd.oneline =
 		_("alters the size of the current memory mapping");
 	mremap_cmd.help = mremap_help;
-#endif /* HAVE_MREMAP */
 
 	add_command(&mmap_cmd);
 	add_command(&mread_cmd);
 	add_command(&msync_cmd);
 	add_command(&munmap_cmd);
 	add_command(&mwrite_cmd);
-#ifdef HAVE_MREMAP
 	add_command(&mremap_cmd);
-#endif /* HAVE_MREMAP */
 }

@@ -33,10 +33,6 @@ ifeq ($(HAVE_PWRITEV2),yes)
 LCFLAGS += -DHAVE_PWRITEV2
 endif
 
-ifeq ($(HAVE_MREMAP),yes)
-LCFLAGS += -DHAVE_MREMAP
-endif
-
 ifeq ($(HAVE_MAP_SYNC),yes)
 LCFLAGS += -DHAVE_MAP_SYNC
 endif
