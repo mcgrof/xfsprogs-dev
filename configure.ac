@@ -36,11 +36,6 @@ AC_ARG_ENABLE(gettext,
 	enable_gettext=yes)
 AC_SUBST(enable_gettext)
 
-AC_ARG_ENABLE(blkid,
-[  --enable-blkid=[yes/no]   Enable use of block device id library [default=yes]],,
-	enable_blkid=yes)
-AC_SUBST(enable_blkid)
-
 AC_ARG_ENABLE(editline,
 [  --enable-editline=[yes/no] Enable editline command editing [default=no]],
 	test $enable_editline = yes && libeditline="-ledit",
@@ -208,10 +203,7 @@ AC_HAVE_HDIO_GETGEO
 AC_CONFIG_SYSTEMD_SYSTEM_UNIT_DIR
 AC_CONFIG_CROND_DIR
 AC_CONFIG_UDEV_RULE_DIR
-
-if test "$enable_blkid" = yes; then
 AC_HAVE_BLKID_TOPO
-fi
 
 if test "$enable_ubsan" = "yes" || test "$enable_ubsan" = "probe"; then
         AC_PACKAGE_CHECK_UBSAN

@@ -86,7 +86,6 @@ RPM_VERSION	= @rpm_version@
 ENABLE_SHARED	= @enable_shared@
 ENABLE_GETTEXT	= @enable_gettext@
 ENABLE_EDITLINE	= @enable_editline@
-ENABLE_BLKID	= @enable_blkid@
 ENABLE_SCRUB	= @enable_scrub@
 
 HAVE_ZIPPED_MANPAGES = @have_zipped_manpages@
@@ -143,9 +142,6 @@ PCFLAGS+= -DHAVE_MNTENT
 endif
 ifeq ($(HAVE_FSETXATTR),yes)
 PCFLAGS+= -DHAVE_FSETXATTR
-endif
-ifeq ($(ENABLE_BLKID),yes)
-PCFLAGS+= -DENABLE_BLKID
 endif
 ifeq ($(NEED_INTERNAL_FSXATTR),yes)
 PCFLAGS+= -DOVERRIDE_SYSTEM_FSXATTR
