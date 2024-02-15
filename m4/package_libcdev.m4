@@ -1,21 +1,3 @@
-# 
-# Check if we have a working fadvise system call
-#
-AC_DEFUN([AC_HAVE_FADVISE],
-  [ AC_MSG_CHECKING([for fadvise ])
-    AC_COMPILE_IFELSE(
-    [	AC_LANG_PROGRAM([[
-#define _GNU_SOURCE
-#include <fcntl.h>
-	]], [[
-posix_fadvise(0, 1, 0, POSIX_FADV_NORMAL);
-	]])
-    ],	have_fadvise=yes
-	AC_MSG_RESULT(yes),
-	AC_MSG_RESULT(no))
-    AC_SUBST(have_fadvise)
-  ])
-
 #
 # Check if we have a working madvise system call
 #
