@@ -74,14 +74,6 @@ double auto_units(unsigned long long number, char **units, int *precision);
 unsigned int scrub_nproc(struct scrub_ctx *ctx);
 unsigned int scrub_nproc_workqueue(struct scrub_ctx *ctx);
 
-#ifndef HAVE_SYNCFS
-static inline int syncfs(int fd)
-{
-	sync();
-	return 0;
-}
-#endif
-
 void background_sleep(void);
 char *string_escape(const char *in);
 

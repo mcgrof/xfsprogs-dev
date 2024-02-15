@@ -21,7 +21,6 @@ sync_f(
 	return 0;
 }
 
-#ifdef HAVE_SYNCFS
 static cmdinfo_t syncfs_cmd;
 
 static int
@@ -35,7 +34,6 @@ syncfs_f(
 	}
 	return 0;
 }
-#endif
 
 void
 sync_init(void)
@@ -49,7 +47,6 @@ sync_init(void)
 
 	add_command(&sync_cmd);
 
-#ifdef HAVE_SYNCFS
 	syncfs_cmd.name = "syncfs";
 	syncfs_cmd.cfunc = syncfs_f;
 	syncfs_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
@@ -57,5 +54,4 @@ sync_init(void)
 		_("calls syncfs(2) to flush all in-core filesystem state to disk");
 
 	add_command(&syncfs_cmd);
-#endif
 }

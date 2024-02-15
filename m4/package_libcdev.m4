@@ -55,24 +55,6 @@ syscall(__NR_copy_file_range, 0, 0, 0, 0, 0, 0);
   ])
 
 #
-# Check if we have a syncfs libc call (Linux)
-#
-AC_DEFUN([AC_HAVE_SYNCFS],
-  [ AC_MSG_CHECKING([for syncfs])
-    AC_LINK_IFELSE(
-    [	AC_LANG_PROGRAM([[
-#define _GNU_SOURCE
-#include <unistd.h>
-	]], [[
-syncfs(0);
-	]])
-    ], have_syncfs=yes
-       AC_MSG_RESULT(yes),
-       AC_MSG_RESULT(no))
-    AC_SUBST(have_syncfs)
-  ])
-
-#
 # Check if we have a fsetxattr call
 #
 AC_DEFUN([AC_HAVE_FSETXATTR],
