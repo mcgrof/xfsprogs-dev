@@ -27,9 +27,7 @@
 #include <asm/types.h>
 #include <mntent.h>
 #include <fcntl.h>
-#if defined(HAVE_FALLOCATE)
 #include <linux/falloc.h>
-#endif
 #ifdef OVERRIDE_SYSTEM_FSXATTR
 # define fsxattr sys_fsxattr
 #endif
