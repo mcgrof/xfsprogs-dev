@@ -25,8 +25,6 @@
 #include <libgen.h>
 #include <urcu.h>
 
-typedef struct filldir		filldir_t;
-
 /* long and pointer must be either 32 bit or 64 bit */
 #undef SIZEOF_LONG
 #undef SIZEOF_CHAR_P
