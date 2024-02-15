@@ -136,9 +136,6 @@ GCCFLAGS = -funsigned-char -fno-strict-aliasing -Wall
 
 # _LGPL_SOURCE is for liburcu to work correctly with GPL/LGPL programs
 PCFLAGS = -D_LGPL_SOURCE -D_GNU_SOURCE $(GCCFLAGS)
-ifeq ($(HAVE_UMODE_T),yes)
-PCFLAGS += -DHAVE_UMODE_T
-endif
 DEPENDFLAGS = -D__linux__
 ifeq ($(HAVE_FLS),yes)
 LCFLAGS+= -DHAVE_FLS

@@ -22,7 +22,6 @@ LSRCFILES = \
 	package_pthread.m4 \
 	package_sanitizer.m4 \
 	package_services.m4 \
-	package_types.m4 \
 	package_icu.m4 \
 	package_urcu.m4 \
 	package_utilies.m4 \
