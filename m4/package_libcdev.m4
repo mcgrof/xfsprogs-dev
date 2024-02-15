@@ -36,19 +36,6 @@ syscall(__NR_copy_file_range, 0, 0, 0, 0, 0, 0);
   ])
 
 #
-# Check if we have a fsetxattr call
-#
-AC_DEFUN([AC_HAVE_FSETXATTR],
-  [ AC_CHECK_DECL([fsetxattr],
-       have_fsetxattr=yes,
-       [],
-       [#include <sys/types.h>
-        #include <sys/xattr.h>]
-       )
-    AC_SUBST(have_fsetxattr)
-  ])
-
-#
 # Check if we need to override the system struct fsxattr with
 # the internal definition.  This /only/ happens if the system
 # actually defines struct fsxattr /and/ the system definition
