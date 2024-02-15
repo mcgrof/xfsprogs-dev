@@ -177,25 +177,6 @@ test = mallinfo2();
     AC_SUBST(have_mallinfo2)
   ])
 
-#
-# Check if we have the HDIO_GETGEO ioctl
-#
-AC_DEFUN([AC_HAVE_HDIO_GETGEO],
-  [ AC_MSG_CHECKING([for struct hd_geometry ])
-    AC_COMPILE_IFELSE(
-    [	AC_LANG_PROGRAM([[
-#include <linux/hdreg.h>
-#include <sys/ioctl.h>
-	]], [[
-struct hd_geometry hdr;
-ioctl(0, HDIO_GETGEO, &hdr);
-	]])
-    ], have_hdio_getgeo=yes
-       AC_MSG_RESULT(yes),
-       AC_MSG_RESULT(no))
-    AC_SUBST(have_hdio_getgeo)
-  ])
-
 AC_DEFUN([AC_PACKAGE_CHECK_LTO],
   [ AC_MSG_CHECKING([if C compiler supports LTO])
     OLD_CFLAGS="$CFLAGS"

@@ -11,9 +11,7 @@
 #include <sys/types.h>
 #include <sys/statvfs.h>
 #include <scsi/sg.h>
-#ifdef HAVE_HDIO_GETGEO
-# include <linux/hdreg.h>
-#endif
+#include <linux/hdreg.h>
 #include "platform_defs.h"
 #include "libfrog/util.h"
 #include "libfrog/paths.h"
@@ -184,9 +182,7 @@ struct disk *
 disk_open(
 	const char		*pathname)
 {
-#ifdef HAVE_HDIO_GETGEO
 	struct hd_geometry	bdgeo;
-#endif
 	struct disk		*disk;
 	bool			suspicious_disk = false;
 	int			error;
@@ -218,7 +214,6 @@ disk_open(
 		error = ioctl(disk->d_fd, BLKBSZGET, &disk->d_blksize);
 		if (error)
 			disk->d_blksize = 0;
-#ifdef HAVE_HDIO_GETGEO
 		error = ioctl(disk->d_fd, HDIO_GETGEO, &bdgeo);
 		if (!error) {
 			/*
@@ -234,7 +229,6 @@ disk_open(
 				suspicious_disk = true;
 			disk->d_start = bdgeo.start << BBSHIFT;
 		} else
-#endif
 			disk->d_start = 0;
 	} else {
 		disk->d_size = disk->d_sb.st_size;
