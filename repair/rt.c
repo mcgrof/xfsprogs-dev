@@ -13,6 +13,7 @@
 #include "protos.h"
 #include "err_protos.h"
 #include "rt.h"
+#include "xfs_rtbitmap.h"
 
 #define xfs_highbit64 libxfs_highbit64	/* for XFS_RTBLOCKLOG macro */
 
@@ -91,7 +92,7 @@ generate_rtinfo(xfs_mount_t	*mp,
 			} else if (in_extent == 1) {
 				len = (int) (extno - start_ext);
 				log = XFS_RTBLOCKLOG(len);
-				offs = XFS_SUMOFFS(mp, log, start_bmbno);
+				offs = xfs_rtsumoffs(mp, log, start_bmbno);
 				sumcompute[offs]++;
 				in_extent = 0;
 			}
@@ -107,7 +108,7 @@ generate_rtinfo(xfs_mount_t	*mp,
 	if (in_extent == 1) {
 		len = (int) (extno - start_ext);
 		log = XFS_RTBLOCKLOG(len);
-		offs = XFS_SUMOFFS(mp, log, start_bmbno);
+		offs = xfs_rtsumoffs(mp, log, start_bmbno);
 		sumcompute[offs]++;
 	}
 
