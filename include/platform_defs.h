@@ -31,7 +31,6 @@
 typedef unsigned short umode_t;
 
 /* Define if you want gettext (I18N) support */
-#undef ENABLE_GETTEXT
 #ifdef ENABLE_GETTEXT
 # include <libintl.h>
 # define _(x)                   gettext(x)
