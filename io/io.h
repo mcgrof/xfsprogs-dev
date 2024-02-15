@@ -117,12 +117,7 @@ extern void		sync_init(void);
 extern void		truncate_init(void);
 extern void		utimes_init(void);
 extern void		fadvise_init(void);
-
-#ifdef HAVE_SENDFILE
 extern void		sendfile_init(void);
-#else
-#define sendfile_init()	do { } while (0)
-#endif
 
 #ifdef HAVE_MADVISE
 extern void		madvise_init(void);

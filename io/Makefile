@@ -13,7 +13,7 @@ CFILES = init.c \
 	file.c freeze.c fsuuid.c fsync.c getrusage.c imap.c inject.c label.c \
 	link.c mmap.c open.c parent.c pread.c prealloc.c pwrite.c reflink.c \
 	resblks.c scrub.c seek.c shutdown.c stat.c swapext.c sync.c \
-	truncate.c utimes.c fadvise.c
+	truncate.c utimes.c fadvise.c sendfile.c
 
 LLDLIBS = $(LIBXCMD) $(LIBHANDLE) $(LIBFROG) $(LIBPTHREAD) $(LIBUUID)
 LTDEPENDENCIES = $(LIBXCMD) $(LIBHANDLE) $(LIBFROG)
@@ -31,13 +31,6 @@ CFILES += mincore.c
 LCFLAGS += -DHAVE_MINCORE
 else
 LSRCFILES += mincore.c
-endif
-
-ifeq ($(HAVE_SENDFILE),yes)
-CFILES += sendfile.c
-LCFLAGS += -DHAVE_SENDFILE
-else
-LSRCFILES += sendfile.c
 endif
 
 ifeq ($(HAVE_FIEMAP),yes)

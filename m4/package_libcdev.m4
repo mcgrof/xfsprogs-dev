@@ -35,24 +35,6 @@ mincore(0, 0, 0);
   ])
 
 #
-# Check if we have a working sendfile system call
-#
-AC_DEFUN([AC_HAVE_SENDFILE],
-  [ AC_MSG_CHECKING([for sendfile ])
-    AC_COMPILE_IFELSE(
-    [	AC_LANG_PROGRAM([[
-#define _GNU_SOURCE
-#include <sys/sendfile.h>
-	]], [[
-sendfile(0, 0, 0, 0);
-	]])
-    ],	have_sendfile=yes
-	AC_MSG_RESULT(yes),
-	AC_MSG_RESULT(no))
-    AC_SUBST(have_sendfile)
-  ])
-
-#
 # Check if we have a fallocate libc call (Linux)
 #
 AC_DEFUN([AC_HAVE_FALLOCATE],
