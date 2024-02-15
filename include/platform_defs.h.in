@@ -26,9 +26,7 @@
 #include <urcu.h>
 
 /* long and pointer must be either 32 bit or 64 bit */
-#undef SIZEOF_LONG
-#undef SIZEOF_CHAR_P
-#define BITS_PER_LONG (SIZEOF_LONG * CHAR_BIT)
+#define BITS_PER_LONG (sizeof(long) * CHAR_BIT)
 
 typedef unsigned short umode_t;
 
