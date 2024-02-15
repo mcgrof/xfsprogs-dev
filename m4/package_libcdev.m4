@@ -74,24 +74,6 @@ syscall(__NR_copy_file_range, 0, 0, 0, 0, 0, 0);
   ])
 
 #
-# Check if we have a sync_file_range libc call (Linux)
-#
-AC_DEFUN([AC_HAVE_SYNC_FILE_RANGE],
-  [ AC_MSG_CHECKING([for sync_file_range])
-    AC_LINK_IFELSE(
-    [	AC_LANG_PROGRAM([[
-#define _GNU_SOURCE
-#include <fcntl.h>
-	]], [[
-sync_file_range(0, 0, 0, 0);
-	]])
-    ], have_sync_file_range=yes
-       AC_MSG_RESULT(yes),
-       AC_MSG_RESULT(no))
-    AC_SUBST(have_sync_file_range)
-  ])
-
-#
 # Check if we have a syncfs libc call (Linux)
 #
 AC_DEFUN([AC_HAVE_SYNCFS],

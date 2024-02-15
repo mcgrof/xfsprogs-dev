@@ -13,7 +13,8 @@ CFILES = init.c \
 	file.c freeze.c fsuuid.c fsync.c getrusage.c imap.c inject.c label.c \
 	link.c mmap.c open.c parent.c pread.c prealloc.c pwrite.c reflink.c \
 	resblks.c scrub.c seek.c shutdown.c stat.c swapext.c sync.c \
-	truncate.c utimes.c fadvise.c sendfile.c madvise.c mincore.c fiemap.c
+	truncate.c utimes.c fadvise.c sendfile.c madvise.c mincore.c fiemap.c \
+	sync_file_range.c
 
 LLDLIBS = $(LIBXCMD) $(LIBHANDLE) $(LIBFROG) $(LIBPTHREAD) $(LIBUUID)
 LTDEPENDENCIES = $(LIBXCMD) $(LIBHANDLE) $(LIBFROG)
@@ -22,11 +23,6 @@ LLDFLAGS = -static-libtool-libs
 ifeq ($(HAVE_COPY_FILE_RANGE),yes)
 CFILES += copy_file_range.c
 LCFLAGS += -DHAVE_COPY_FILE_RANGE
-endif
-
-ifeq ($(HAVE_SYNC_FILE_RANGE),yes)
-CFILES += sync_file_range.c
-LCFLAGS += -DHAVE_SYNC_FILE_RANGE
 endif
 
 ifeq ($(HAVE_SYNCFS),yes)
