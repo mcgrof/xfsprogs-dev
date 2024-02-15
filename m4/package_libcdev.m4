@@ -92,18 +92,6 @@ syncfs(0);
   ])
 
 #
-# Check if we have a flc call (Mac OS X)
-#
-AC_DEFUN([AC_HAVE_FLS],
-  [ AC_CHECK_DECL([fls],
-       have_fls=yes,
-       [],
-       [#include <string.h>]
-       )
-    AC_SUBST(have_fls)
-  ])
-
-#
 # Check if we have a fsetxattr call
 #
 AC_DEFUN([AC_HAVE_FSETXATTR],

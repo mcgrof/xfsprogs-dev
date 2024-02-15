@@ -95,7 +95,6 @@ HAVE_PREADV = @have_preadv@
 HAVE_PWRITEV2 = @have_pwritev2@
 HAVE_COPY_FILE_RANGE = @have_copy_file_range@
 HAVE_SYNCFS = @have_syncfs@
-HAVE_FLS = @have_fls@
 HAVE_FSETXATTR = @have_fsetxattr@
 HAVE_MREMAP = @have_mremap@
 NEED_INTERNAL_FSXATTR = @need_internal_fsxattr@
@@ -127,9 +126,6 @@ GCCFLAGS = -funsigned-char -fno-strict-aliasing -Wall
 # _LGPL_SOURCE is for liburcu to work correctly with GPL/LGPL programs
 PCFLAGS = -D_LGPL_SOURCE -D_GNU_SOURCE $(GCCFLAGS)
 DEPENDFLAGS = -D__linux__
-ifeq ($(HAVE_FLS),yes)
-LCFLAGS+= -DHAVE_FLS
-endif
 ifeq ($(HAVE_MNTENT),yes)
 PCFLAGS+= -DHAVE_MNTENT
 endif
