@@ -1,22 +1,4 @@
 #
-# Check if we have a working mincore system call
-#
-AC_DEFUN([AC_HAVE_MINCORE],
-  [ AC_MSG_CHECKING([for mincore ])
-    AC_COMPILE_IFELSE(
-    [	AC_LANG_PROGRAM([[
-#define _GNU_SOURCE
-#include <sys/mman.h>
-	]], [[
-mincore(0, 0, 0);
-	]])
-    ],	have_mincore=yes
-	AC_MSG_RESULT(yes),
-	AC_MSG_RESULT(no))
-    AC_SUBST(have_mincore)
-  ])
-
-#
 # Check if we have a fallocate libc call (Linux)
 #
 AC_DEFUN([AC_HAVE_FALLOCATE],

@@ -119,12 +119,7 @@ extern void		utimes_init(void);
 extern void		fadvise_init(void);
 extern void		sendfile_init(void);
 extern void		madvise_init(void);
-
-#ifdef HAVE_MINCORE
 extern void		mincore_init(void);
-#else
-#define mincore_init()	do { } while (0)
-#endif
 
 #ifdef HAVE_FIEMAP
 extern void		fiemap_init(void);
