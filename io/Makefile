@@ -13,18 +13,11 @@ CFILES = init.c \
 	file.c freeze.c fsuuid.c fsync.c getrusage.c imap.c inject.c label.c \
 	link.c mmap.c open.c parent.c pread.c prealloc.c pwrite.c reflink.c \
 	resblks.c scrub.c seek.c shutdown.c stat.c swapext.c sync.c \
-	truncate.c utimes.c fadvise.c sendfile.c
+	truncate.c utimes.c fadvise.c sendfile.c madvise.c
 
 LLDLIBS = $(LIBXCMD) $(LIBHANDLE) $(LIBFROG) $(LIBPTHREAD) $(LIBUUID)
 LTDEPENDENCIES = $(LIBXCMD) $(LIBHANDLE) $(LIBFROG)
 LLDFLAGS = -static-libtool-libs
-
-ifeq ($(HAVE_MADVISE),yes)
-CFILES += madvise.c
-LCFLAGS += -DHAVE_MADVISE
-else
-LSRCFILES += madvise.c
-endif
 
 ifeq ($(HAVE_MINCORE),yes)
 CFILES += mincore.c

@@ -118,12 +118,7 @@ extern void		truncate_init(void);
 extern void		utimes_init(void);
 extern void		fadvise_init(void);
 extern void		sendfile_init(void);
-
-#ifdef HAVE_MADVISE
 extern void		madvise_init(void);
-#else
-#define madvise_init()	do { } while (0)
-#endif
 
 #ifdef HAVE_MINCORE
 extern void		mincore_init(void);

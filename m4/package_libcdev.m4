@@ -1,22 +1,4 @@
 #
-# Check if we have a working madvise system call
-#
-AC_DEFUN([AC_HAVE_MADVISE],
-  [ AC_MSG_CHECKING([for madvise ])
-    AC_COMPILE_IFELSE(
-    [	AC_LANG_PROGRAM([[
-#define _GNU_SOURCE
-#include <sys/mman.h>
-	]], [[
-posix_madvise(0, 0, MADV_NORMAL);
-	]])
-    ],	have_madvise=yes
-	AC_MSG_RESULT(yes),
-	AC_MSG_RESULT(no))
-    AC_SUBST(have_madvise)
-  ])
-
-#
 # Check if we have a working mincore system call
 #
 AC_DEFUN([AC_HAVE_MINCORE],
