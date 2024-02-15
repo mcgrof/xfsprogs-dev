@@ -71,24 +71,6 @@ sendfile(0, 0, 0, 0);
   ])
 
 #
-# Check if we have a getmntent libc call (Linux)
-#
-AC_DEFUN([AC_HAVE_GETMNTENT],
-  [ AC_MSG_CHECKING([for getmntent ])
-    AC_COMPILE_IFELSE(
-    [	AC_LANG_PROGRAM([[
-#include <stdio.h>
-#include <mntent.h>
-	]], [[
-getmntent(0);
-	]])
-    ], have_getmntent=yes
-       AC_MSG_RESULT(yes),
-       AC_MSG_RESULT(no))
-    AC_SUBST(have_getmntent)
-  ])
-
-#
 # Check if we have a fallocate libc call (Linux)
 #
 AC_DEFUN([AC_HAVE_FALLOCATE],
@@ -260,15 +242,6 @@ AC_DEFUN([AC_HAVE_FSETXATTR],
         #include <sys/xattr.h>]
        )
     AC_SUBST(have_fsetxattr)
-  ])
-
-#
-# Check if there is mntent.h
-#
-AC_DEFUN([AC_HAVE_MNTENT],
-  [ AC_CHECK_HEADERS(mntent.h,
-    have_mntent=yes)
-    AC_SUBST(have_mntent)
   ])
 
 #

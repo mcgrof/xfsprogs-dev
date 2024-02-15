@@ -11,10 +11,6 @@ LLDLIBS = $(LIBHANDLE) $(LIBFROG) $(LIBPTHREAD) $(LIBBLKID)
 LTDEPENDENCIES = $(LIBHANDLE) $(LIBFROG)
 LLDFLAGS = -static-libtool-libs
 
-ifeq ($(HAVE_GETMNTENT),yes)
-LCFLAGS += -DHAVE_GETMNTENT
-endif
-
 default: depend $(LTCOMMAND)
 
 include $(BUILDRULES)

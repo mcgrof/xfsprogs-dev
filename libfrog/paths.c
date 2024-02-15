@@ -15,6 +15,7 @@
 #include "paths.h"
 #include "input.h"
 #include "projects.h"
+#include <mntent.h>
 #include <limits.h>
 
 extern char *progname;
@@ -295,10 +296,6 @@ fs_cursor_next_entry(
 	return NULL;
 }
 
-
-#if defined(HAVE_GETMNTENT)
-#include <mntent.h>
-
 /*
  * Determines whether the "logdev" or "rtdev" mount options are
  * present for the given mount point.  If so, the value for each (a
@@ -416,10 +413,6 @@ fs_table_initialise_mounts(
 
 	return error;
 }
-
-#else
-# error "How do I extract info about mounted filesystems on this platform?"
-#endif
 
 /*
  * Given a directory, match it up to a filesystem mount point.
