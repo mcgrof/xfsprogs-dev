@@ -238,10 +238,8 @@ statfs_f(
 					(long long) st.f_files);
 			printf(_("statfs.f_ffree = %lld\n"),
 					(long long) st.f_ffree);
-#ifdef HAVE_STATFS_FLAGS
 			printf(_("statfs.f_flags = 0x%llx\n"),
 					(long long) st.f_flags);
-#endif
 		}
 	}
 
