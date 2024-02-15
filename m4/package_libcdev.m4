@@ -178,20 +178,6 @@ test = mallinfo2();
   ])
 
 #
-# Check if we have a fstatat call
-#
-AC_DEFUN([AC_HAVE_FSTATAT],
-  [ AC_CHECK_DECL([fstatat],
-       have_fstatat=yes,
-       [],
-       [#define _GNU_SOURCE
-       #include <sys/types.h>
-       #include <sys/stat.h>
-       #include <unistd.h>])
-    AC_SUBST(have_fstatat)
-  ])
-
-#
 # Check if we have the SG_IO ioctl
 #
 AC_DEFUN([AC_HAVE_SG_IO],
