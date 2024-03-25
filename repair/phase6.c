@@ -151,9 +151,10 @@ dir_read_buf(
 }
 
 /*
- * Returns 0 if the name already exists (ie. a duplicate)
+ * Returns inode number of original file if the name already exists
+ * (ie. a duplicate)
  */
-static int
+static xfs_ino_t
 dir_hash_add(
 	struct xfs_mount	*mp,
 	struct dir_hash_tab	*hashtab,
@@ -166,7 +167,7 @@ dir_hash_add(
 	xfs_dahash_t		hash = 0;
 	int			byhash = 0;
 	struct dir_hash_ent	*p;
-	int			dup;
+	xfs_ino_t		dup_inum;
 	short			junk;
 	struct xfs_name		xname;
 	int			error;
@@ -176,7 +177,7 @@ dir_hash_add(
 	xname.type = ftype;
 
 	junk = name[0] == '/';
-	dup = 0;
+	dup_inum = NULLFSINO;
 
 	if (!junk) {
 		hash = libxfs_dir2_hashname(mp, &xname);
@@ -188,7 +189,7 @@ dir_hash_add(
 		for (p = hashtab->byhash[byhash]; p; p = p->nextbyhash) {
 			if (p->hashval == hash && p->name.len == namelen) {
 				if (memcmp(p->name.name, name, namelen) == 0) {
-					dup = 1;
+					dup_inum = p->inum;
 					junk = 1;
 					break;
 				}
@@ -234,7 +235,7 @@ dir_hash_add(
 	p->name.name = p->namebuf;
 	p->name.len = namelen;
 	p->name.type = ftype;
-	return !dup;
+	return dup_inum;
 }
 
 /* Mark an existing directory hashtable entry as junk. */
@@ -1189,9 +1190,13 @@ entry_junked(
 	const char 	*msg,
 	const char	*iname,
 	xfs_ino_t	ino1,
-	xfs_ino_t	ino2)
+	xfs_ino_t	ino2,
+	xfs_ino_t	ino3)
 {
-	do_warn(msg, iname, ino1, ino2);
+	if(ino3 != NULLFSINO)
+		do_warn(msg, iname, ino1, ino2, ino3);
+	else
+		do_warn(msg, iname, ino1, ino2);
 	if (!no_modify)
 		do_warn(_("junking entry\n"));
 	else
@@ -1486,6 +1491,7 @@ longform_dir2_entry_check_data(
 	int			i;
 	int			ino_offset;
 	xfs_ino_t		inum;
+	xfs_ino_t		dup_inum;
 	ino_tree_node_t		*irec;
 	int			junkit;
 	int			lastfree;
@@ -1696,7 +1702,7 @@ longform_dir2_entry_check_data(
 			nbad++;
 			if (entry_junked(
 	_("entry \"%s\" in directory inode %" PRIu64 " points to non-existent inode %" PRIu64 ", "),
-					fname, ip->i_ino, inum)) {
+					fname, ip->i_ino, inum, NULLFSINO)) {
 				dep->name[0] = '/';
 				libxfs_dir2_data_log_entry(&da, bp, dep);
 			}
@@ -1713,7 +1719,7 @@ longform_dir2_entry_check_data(
 			nbad++;
 			if (entry_junked(
 	_("entry \"%s\" in directory inode %" PRIu64 " points to free inode %" PRIu64 ", "),
-					fname, ip->i_ino, inum)) {
+					fname, ip->i_ino, inum, NULLFSINO)) {
 				dep->name[0] = '/';
 				libxfs_dir2_data_log_entry(&da, bp, dep);
 			}
@@ -1731,7 +1737,7 @@ longform_dir2_entry_check_data(
 				nbad++;
 				if (entry_junked(
 	_("%s (ino %" PRIu64 ") in root (%" PRIu64 ") is not a directory, "),
-						ORPHANAGE, inum, ip->i_ino)) {
+						ORPHANAGE, inum, ip->i_ino, NULLFSINO)) {
 					dep->name[0] = '/';
 					libxfs_dir2_data_log_entry(&da, bp, dep);
 				}
@@ -1748,12 +1754,13 @@ longform_dir2_entry_check_data(
 		/*
 		 * check for duplicate names in directory.
 		 */
-		if (!dir_hash_add(mp, hashtab, addr, inum, dep->namelen,
-				dep->name, libxfs_dir2_data_get_ftype(mp, dep))) {
+		dup_inum = dir_hash_add(mp, hashtab, addr, inum, dep->namelen,
+				dep->name, libxfs_dir2_data_get_ftype(mp, dep));
+		if (dup_inum != NULLFSINO) {
 			nbad++;
 			if (entry_junked(
-	_("entry \"%s\" (ino %" PRIu64 ") in dir %" PRIu64 " is a duplicate name, "),
-					fname, inum, ip->i_ino)) {
+	_("entry \"%s\" (ino %" PRIu64 ") in dir %" PRIu64 " already points to ino %" PRIu64 ", "),
+					fname, inum, ip->i_ino, dup_inum)) {
 				dep->name[0] = '/';
 				libxfs_dir2_data_log_entry(&da, bp, dep);
 			}
@@ -1784,7 +1791,7 @@ longform_dir2_entry_check_data(
 				nbad++;
 				if (entry_junked(
 	_("entry \"%s\" (ino %" PRIu64 ") in dir %" PRIu64 " is not in the the first block, "), fname,
-						inum, ip->i_ino)) {
+						inum, ip->i_ino, NULLFSINO)) {
 					dir_hash_junkit(hashtab, addr);
 					dep->name[0] = '/';
 					libxfs_dir2_data_log_entry(&da, bp, dep);
@@ -1817,7 +1824,7 @@ longform_dir2_entry_check_data(
 				nbad++;
 				if (entry_junked(
 	_("entry \"%s\" in dir %" PRIu64 " is not the first entry, "),
-						fname, inum, ip->i_ino)) {
+						fname, inum, ip->i_ino, NULLFSINO)) {
 					dir_hash_junkit(hashtab, addr);
 					dep->name[0] = '/';
 					libxfs_dir2_data_log_entry(&da, bp, dep);
@@ -2472,6 +2479,7 @@ shortform_dir2_entry_check(
 {
 	xfs_ino_t		lino;
 	xfs_ino_t		parent;
+	xfs_ino_t		dup_inum;
 	struct xfs_dir2_sf_hdr	*sfp = ip->i_df.if_data;
 	struct xfs_dir2_sf_entry *sfep;
 	struct xfs_dir2_sf_entry *next_sfep;
@@ -2654,13 +2662,14 @@ shortform_dir2_entry_check(
 		/*
 		 * check for duplicate names in directory.
 		 */
-		if (!dir_hash_add(mp, hashtab, (xfs_dir2_dataptr_t)
+		dup_inum = dir_hash_add(mp, hashtab, (xfs_dir2_dataptr_t)
 				(sfep - xfs_dir2_sf_firstentry(sfp)),
 				lino, sfep->namelen, sfep->name,
-				libxfs_dir2_sf_get_ftype(mp, sfep))) {
+				libxfs_dir2_sf_get_ftype(mp, sfep));
+		if (dup_inum != NULLFSINO) {
 			do_warn(
-_("entry \"%s\" (ino %" PRIu64 ") in dir %" PRIu64 " is a duplicate name, "),
-				fname, lino, ino);
+_("entry \"%s\" (ino %" PRIu64 ") in dir %" PRIu64 " already points to ino %" PRIu64 ", "),
+				fname, lino, ino, dup_inum);
 			next_sfep = shortform_dir2_junk(mp, sfp, sfep, lino,
 						&max_size, &i, &bytes_deleted,
 						ino_dirty);
