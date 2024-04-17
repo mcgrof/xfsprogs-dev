@@ -400,6 +400,40 @@ flist_split(
 	return v;
 }
 
+static flist_t *
+flist_field_match(
+	const field_t		*field,
+	fldt_t			type,
+	void			*obj,
+	int			startoff)
+{
+	flist_t			*fl;
+	int			count;
+	const ftattr_t		*fa;
+	flist_t			*nfl;
+
+	fl = flist_make(field->name);
+	fl->fld = field;
+	if (field->ftyp == type)
+		return fl;
+	count = fcount(field, obj, startoff);
+	if (!count)
+		goto out;
+	fa = &ftattrtab[field->ftyp];
+	if (!fa->subfld)
+		goto out;
+
+	nfl = flist_find_ftyp(fa->subfld, type, obj, startoff);
+	if (nfl) {
+		fl->child = nfl;
+		return fl;
+	}
+
+out:
+	flist_free(fl);
+	return NULL;
+}
+
 /*
  * Given a set of fields, scan for a field of the given type.
  * Return an flist leading to the first found field
@@ -413,33 +447,15 @@ flist_find_ftyp(
 	void		*obj,
 	int		startoff)
 {
-	flist_t	*fl;
 	const field_t	*f;
-	int		count;
-	const ftattr_t  *fa;
+	flist_t		*fl;
 
 	for (f = fields; f->name; f++) {
-		fl = flist_make(f->name);
-		fl->fld = f;
-		if (f->ftyp == type)
+		fl = flist_field_match(f, type, obj, startoff);
+		if (fl)
 			return fl;
-		count = fcount(f, obj, startoff);
-		if (!count) {
-			flist_free(fl);
-			continue;
-		}
-		fa = &ftattrtab[f->ftyp];
-		if (fa->subfld) {
-			flist_t *nfl;
-
-			nfl = flist_find_ftyp(fa->subfld, type, obj, startoff);
-			if (nfl) {
-				fl->child = nfl;
-				return fl;
-			}
-		}
-		flist_free(fl);
 	}
+
 	return NULL;
 }
 
