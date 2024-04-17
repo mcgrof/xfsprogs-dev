@@ -164,7 +164,13 @@ main(int argc, char **argv)
 			usage(1);
 			break;
 		case 't':
-			howlong = atoi(optarg);
+			errno = 0;
+			howlong = strtol(optarg, NULL, 10);
+			if (errno) {
+				fprintf(stderr, _("%s: invalid runtime: %s\n"),
+					optarg, strerror(errno));
+				exit(1);
+			}
 			if (howlong > INT_MAX) {
 				fprintf(stderr,
 				_("%s: the maximum runtime is %d seconds.\n"),
@@ -179,10 +185,24 @@ main(int argc, char **argv)
 			mtab = optarg;
 			break;
 		case 'b':
-			argv_blksz_dio = atoi(optarg);
+			errno = 0;
+			argv_blksz_dio = strtol(optarg, NULL, 10);
+			if (errno) {
+				fprintf(stderr,
+					_("%s: invalid block size: %s\n"),
+					optarg, strerror(errno));
+				exit(1);
+			}
 			break;
 		case 'p':
-			npasses = atoi(optarg);
+			errno = 0;
+			npasses = strtol(optarg, NULL, 10);
+			if (errno) {
+				fprintf(stderr,
+					_("%s: invalid number of passes: %s\n"),
+					optarg, strerror(errno));
+				exit(1);
+			}
 			break;
 		case 'C':
 			/* Testing opt: coerses frag count in result */
