@@ -252,14 +252,22 @@ process_args(int argc, char **argv)
 					if (!val)
 						do_abort(
 		_("-o bhash requires a parameter\n"));
+					errno = 0;
 					libxfs_bhash_size = (int)strtol(val, NULL, 0);
+					if (errno)
+						do_abort(
+		_("-o bhash invalid parameter: %s\n"), strerror(errno));
 					bhash_option_used = 1;
 					break;
 				case AG_STRIDE:
 					if (!val)
 						do_abort(
 		_("-o ag_stride requires a parameter\n"));
+					errno = 0;
 					ag_stride = (int)strtol(val, NULL, 0);
+					if (errno)
+						do_abort(
+		_("-o ag_stride invalid parameter: %s\n"), strerror(errno));
 					break;
 				case FORCE_GEO:
 					if (val)
@@ -272,19 +280,31 @@ process_args(int argc, char **argv)
 					if (!val)
 						do_abort(
 		_("-o phase2_threads requires a parameter\n"));
+					errno = 0;
 					phase2_threads = (int)strtol(val, NULL, 0);
+					if (errno)
+						do_abort(
+		_("-o phase2_threads invalid parameter: %s\n"), strerror(errno));
 					break;
 				case BLOAD_LEAF_SLACK:
 					if (!val)
 						do_abort(
 		_("-o debug_bload_leaf_slack requires a parameter\n"));
+					errno = 0;
 					bload_leaf_slack = (int)strtol(val, NULL, 0);
+					if (errno)
+						do_abort(
+		_("-o debug_bload_leaf_slack invalid parameter: %s\n"), strerror(errno));
 					break;
 				case BLOAD_NODE_SLACK:
 					if (!val)
 						do_abort(
 		_("-o debug_bload_node_slack requires a parameter\n"));
+					errno = 0;
 					bload_node_slack = (int)strtol(val, NULL, 0);
+					if (errno)
+						do_abort(
+		_("-o debug_bload_node_slack invalid parameter: %s\n"), strerror(errno));
 					break;
 				case NOQUOTA:
 					quotacheck_skip();
@@ -305,7 +325,11 @@ process_args(int argc, char **argv)
 					if (!val)
 						do_abort(
 		_("-c lazycount requires a parameter\n"));
+					errno = 0;
 					lazy_count = (int)strtol(val, NULL, 0);
+					if (errno)
+						do_abort(
+		_("-o lazycount invalid parameter: %s\n"), strerror(errno));
 					convert_lazy_count = 1;
 					break;
 				case CONVERT_INOBTCOUNT:
@@ -356,7 +380,11 @@ process_args(int argc, char **argv)
 			if (bhash_option_used)
 				do_abort(_("-m option cannot be used with "
 						"-o bhash option\n"));
+			errno = 0;
 			max_mem_specified = strtol(optarg, NULL, 0);
+			if (errno)
+				do_abort(
+		_("%s: invalid memory amount: %s\n"), optarg, strerror(errno));
 			break;
 		case 'L':
 			zap_log = 1;
@@ -377,7 +405,11 @@ process_args(int argc, char **argv)
 			do_prefetch = 0;
 			break;
 		case 't':
+			errno = 0;
 			report_interval = strtol(optarg, NULL, 0);
+			if (errno)
+				do_abort(
+		_("%s: invalid interval: %s\n"), optarg, strerror(errno));
 			break;
 		case 'e':
 			report_corrected = true;
@@ -397,8 +429,14 @@ process_args(int argc, char **argv)
 		usage();
 
 	p = getenv("XFS_REPAIR_FAIL_AFTER_PHASE");
-	if (p)
+	if (p) {
+		errno = 0;
 		fail_after_phase = (int)strtol(p, NULL, 0);
+		if (errno)
+			do_abort(
+		_("%s: invalid phase in XFS_REPAIR_FAIL_AFTER_PHASE: %s\n"),
+				p, strerror(errno));
+	}
 }
 
 void __attribute__((noreturn))
