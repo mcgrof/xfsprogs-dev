@@ -377,7 +377,7 @@ process_args(int argc, char **argv)
 			do_prefetch = 0;
 			break;
 		case 't':
-			report_interval = (int)strtol(optarg, NULL, 0);
+			report_interval = strtol(optarg, NULL, 0);
 			break;
 		case 'e':
 			report_corrected = true;

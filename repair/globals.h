@@ -160,7 +160,7 @@ struct aglock {
 extern struct aglock	*ag_locks;
 extern struct aglock	rt_lock;
 
-extern int		report_interval;
+extern time_t		report_interval;
 extern uint64_t		*prog_rpt_done;
 
 extern int		ag_stride;
