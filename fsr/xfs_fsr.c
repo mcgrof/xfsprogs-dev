@@ -72,7 +72,7 @@ static int  packfile(char *fname, char *tname, int fd,
 static void fsrdir(char *dirname);
 static int  fsrfs(char *mntdir, xfs_ino_t ino, int targetrange);
 static void initallfs(char *mtab);
-static void fsrallfs(char *mtab, int howlong, char *leftofffile);
+static void fsrallfs(char *mtab, time_t howlong, char *leftofffile);
 static void fsrall_cleanup(int timeout);
 static int  getnextents(int);
 int xfsrtextsize(int fd);
@@ -165,6 +165,12 @@ main(int argc, char **argv)
 			break;
 		case 't':
 			howlong = atoi(optarg);
+			if (howlong > INT_MAX) {
+				fprintf(stderr,
+				_("%s: the maximum runtime is %d seconds.\n"),
+					optarg, INT_MAX);
+				exit(1);
+			}
 			break;
 		case 'f':
 			leftofffile = optarg;
@@ -387,7 +393,7 @@ initallfs(char *mtab)
 }
 
 static void
-fsrallfs(char *mtab, int howlong, char *leftofffile)
+fsrallfs(char *mtab, time_t howlong, char *leftofffile)
 {
 	int fd;
 	int error;
