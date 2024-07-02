@@ -14,6 +14,7 @@
 #include "libfrog/dahashselftest.h"
 #include "proto.h"
 #include <ini.h>
+#include <liburing.h>
 
 #define TERABYTES(count, blog)	((uint64_t)(count) << (40 - (blog)))
 #define GIGABYTES(count, blog)	((uint64_t)(count) << (30 - (blog)))
@@ -1364,19 +1365,112 @@ done:
 	free(buf);
 }
 
+struct discard_data {
+	uint64_t start;
+	uint64_t len;
+};
+
+struct blkdev_discard_range {
+	uint64_t start;
+	uint64_t len;
+};
+
 static void
-discard_blocks(int fd, uint64_t nsectors, int quiet)
+prepare_discard(struct io_uring *ring, int fd, uint64_t start, uint64_t len)
+{
+	struct io_uring_sqe *sqe = io_uring_get_sqe(ring);
+	struct blkdev_discard_range range = {
+		.start = start,
+		.len = len,
+	};
+	struct discard_data *data = malloc(sizeof(*data));
+	if (!data)
+		return;
+
+	data->start = start;
+	data->len = len;
+
+	io_uring_prep_msg_ring(sqe, fd, IORING_OP_URING_CMD,
+				  (unsigned long) &range, sizeof(range));
+	sqe->cmd_op = BLKDISCARD;
+	io_uring_sqe_set_data(sqe, data);
+}
+
+#define DEFAULT_QUEUE_DEPTH 64
+
+static int get_max_nr_requests(int fd) {
+
+	unsigned int major, minor;
+	struct stat st;
+	char path[PATH_MAX];
+	FILE *file;
+	int nr_reqs;
+
+	if (fstat(fd, &st) == -1)
+		return DEFAULT_QUEUE_DEPTH;
+
+	 if (!S_ISBLK(st.st_mode))
+		 return DEFAULT_QUEUE_DEPTH;
+
+	major = major(st.st_rdev);
+	minor = minor(st.st_rdev);
+
+	snprintf(path, sizeof(path), "/sys/dev/block/%u:%u/queue/nr_requests", major, minor);
+	file = fopen(path, "r");
+	if (!file)
+		return DEFAULT_QUEUE_DEPTH;
+
+	if (fscanf(file, "%d", &nr_reqs) != 1) {
+		fclose(file);
+		return DEFAULT_QUEUE_DEPTH;
+	}
+
+	fclose(file);
+
+	return nr_reqs;
+}
+
+static int
+check_completions(struct io_uring *ring)
+{
+	struct io_uring_cqe *cqe;
+	unsigned int head, completed = 0;
+	int ret = 0;
+
+	io_uring_for_each_cqe(ring, head, cqe) {
+		struct discard_data *data = io_uring_cqe_get_data(cqe);
+		if (cqe->res < 0) {
+			fprintf(stderr, "BLKDISCARD failed for range starting at %lu: %s\n",
+				data->start, strerror(-cqe->res));
+			ret = cqe->res;
+		} else
+			printf("Successfully discarded %lu bytes starting at offset %lu\n",
+			       data->len, data->start);
+		free(data);
+		completed++;
+	}
+
+	io_uring_cq_advance(ring, completed);
+
+	return ret;
+}
+
+static int
+discard_region(struct io_uring *ring, int fd, int nr_reqs, uint64_t count,
+	       uint64_t step, int region, int quiet)
 {
 	uint64_t	offset = 0;
-	/* Discard the device 2G at a time */
-	const uint64_t	step = 2ULL << 30;
-	const uint64_t	count = BBTOB(nsectors);
+	uint64_t	limit;
+	int ret;
+
+	offset = region * nr_reqs * step;
+	limit = min(count, (region + 1) * nr_reqs * step);
 
 	/*
 	 * The block discarding happens in smaller batches so it can be
 	 * interrupted prematurely
 	 */
-	while (offset < count) {
+	while (offset < limit) {
 		uint64_t	tmp_step = min(step, count - offset);
 
 		/*
@@ -1384,19 +1478,71 @@ discard_blocks(int fd, uint64_t nsectors, int quiet)
 		 * not necessary for the mkfs functionality but just an
 		 * optimization. However we should stop on error.
 		 */
-		if (platform_discard_blocks(fd, offset, tmp_step) == 0) {
-			if (offset == 0 && !quiet) {
-				printf("Discarding blocks...");
-				fflush(stdout);
-			}
-		} else {
-			if (offset > 0 && !quiet)
-				printf("\n");
-			return;
-		}
-
+		prepare_discard(ring, fd, offset, tmp_step);
 		offset += tmp_step;
 	}
+
+	ret = io_uring_submit(ring);
+	if (ret < 0) {
+		fprintf(stderr, _("io_uring_submit() failed\n"));
+		return ret;
+	}
+
+	return check_completions(ring);
+}
+
+static void
+discard_blocks(int fd, uint64_t nsectors, int quiet)
+{
+	uint64_t	offset = 0;
+	/* Discard the device 2G at a time */
+	const uint64_t	step = 2ULL << 30;
+	const uint64_t	count = BBTOB(nsectors);
+	struct io_uring ring;
+	struct io_uring_params params;
+	int ret, nr_reqs, num_regions;
+	unsigned int i;
+
+	nr_reqs = get_max_nr_requests(fd);
+	num_regions = count / nr_reqs;
+
+	memset(&params, 0, sizeof(params));
+	params.flags = IORING_SETUP_CQSIZE;
+	params.cq_entries = nr_reqs * 2;
+
+	if (io_uring_queue_init_params(nr_reqs, &ring, &params) < 0) {
+		fprintf(stderr, _("io_uring_queue_init_params() failed\n"));
+		return;
+	}
+
+	if (io_uring_queue_init(nr_reqs, &ring, 0) < 0) {
+		fprintf(stderr, _("io_uring_queue_init() failed\n"));
+		return;
+	}
+
+	if (!(params.features & IORING_FEAT_NODROP)) {
+		fprintf(stderr, "IORING_FEAT_NODROP not available\n");
+		io_uring_queue_exit(&ring);
+		return;
+	}
+
+	if (!quiet) {
+		printf("Discarding blocks...");
+		fflush(stdout);
+	}
+
+	for (i = 0; i < num_regions; i++) {
+		ret = discard_region(&ring, fd, nr_reqs, count, step, i, quiet);
+		if (ret)
+			goto out;
+	}
+
+
+	io_uring_queue_exit(&ring);
+
+out:
+	printf("\n");
+
 	if (offset > 0 && !quiet)
 		printf("Done.\n");
 }
